@@ -2,7 +2,7 @@
 # Built from the repository root (see infra/docker/compose.prod.yml):
 #   docker build -f infra/docker/backup.Dockerfile -t bharat-harvest/backup .
 # pg_dump must be >= the server major version, so keep this in step with infra/docker/db/Dockerfile.
-FROM postgres:17-bookworm
+FROM postgres:18-bookworm
 
 COPY scripts/lib/pg.sh /opt/bh/scripts/lib/pg.sh
 COPY scripts/backup.sh scripts/restore.sh scripts/restore-test.sh scripts/backup-loop.sh /opt/bh/scripts/
