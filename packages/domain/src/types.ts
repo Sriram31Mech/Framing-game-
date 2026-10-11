@@ -123,6 +123,15 @@ export interface CropDefinition {
   shelfLifeDays: number;
   /** Sensitivities 0..1. */
   risk: { drought: number; flood: number; pest: number; heat: number };
+  /** Soil fertility (0..1) at or above which the fertility factor scores 1. Default 0.6. */
+  fertilityNeed?: number;
+  /**
+   * Fraction of yield potential lost when grown without fertiliser on soil of zero fertility
+   * (scaled down on fertile soils). Default 0.3.
+   */
+  fertilizerResponse?: number;
+  /** Typical day-to-day relative price noise at the mandi (e.g. 0.01 = 1%). Default 0.01. */
+  priceVolatility?: number;
 }
 
 // ---------------------------------------------------------------------------
@@ -216,6 +225,16 @@ export interface CropPlotState {
   pestControlDay: GameDay | null;
   /** Total water received (rain + irrigation), mm. */
   waterReceivedMm: number;
+  /**
+   * Plant-available water in the root zone, mm (may exceed field capacity while ponded).
+   * Initialised by the first `advanceCropDay`; absent on a freshly created plot.
+   */
+  soilMoistureMm?: number;
+  /**
+   * Yield potential per hectare established on the first simulated day (after the nutrient
+   * limit for unfertilised plots). Reference for cumulative yield-loss percentages.
+   */
+  initialYieldKgPerHa?: Kg;
 }
 
 export type CropEvent =
@@ -418,7 +437,15 @@ export interface AiWorldView {
   ownedParcels: {
     parcelId: string;
     env: ParcelEnvironment;
-    plot: { plotId: string; cropId: CropId; status: CropPlotStatus; irrigated: boolean } | null;
+    plot: {
+      plotId: string;
+      cropId: CropId;
+      status: CropPlotStatus;
+      irrigated: boolean;
+      /** 0..1, when known; lets the AI decide on pest control. */
+      pestPressure?: number;
+      pestControlDay?: GameDay | null;
+    } | null;
     leased: boolean;
   }[];
   parcelsForSale: {
@@ -427,7 +454,13 @@ export interface AiWorldView {
     pricePaise: Paise;
     version: number;
   }[];
-  inventory: { itemId: ItemId; availableKg: Kg; quality: number }[];
+  inventory: {
+    itemId: ItemId;
+    availableKg: Kg;
+    quality: number;
+    /** Earliest expiry among the available lots, when known (perishables are sold before it). */
+    expiresDay?: GameDay;
+  }[];
   markets: { marketId: string; prices: Record<ItemId, Paise>; distanceKm: number }[];
   climate: RegionClimate;
 }

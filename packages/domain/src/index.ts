@@ -20,3 +20,4 @@ export * from './machinery';
 export * from './region';
 export * from './terrain';
 export * from './ai';
+export * from './geometry';
