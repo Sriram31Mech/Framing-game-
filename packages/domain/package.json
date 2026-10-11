@@ -1,0 +1,13 @@
+{
+  "name": "@bh/domain",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Pure, deterministic game rules: crops, suitability, growth, weather, pricing, finance, AI scoring. No I/O.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json"
+  }
+}

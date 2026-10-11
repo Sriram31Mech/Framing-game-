@@ -1,0 +1,23 @@
+# Local development services. Production layout lives in infra/docker/.
+services:
+  db:
+    build: ./infra/docker/db
+    image: bharat-harvest/postgis:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: bh
+      POSTGRES_PASSWORD: bh_dev_password
+      POSTGRES_DB: bharat_harvest
+    ports:
+      - '54329:5432'
+    volumes:
+      - bh_db_data:/var/lib/postgresql/data
+      - ./infra/docker/initdb:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U bh -d bharat_harvest']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  bh_db_data:

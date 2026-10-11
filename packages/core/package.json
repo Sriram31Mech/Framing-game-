@@ -1,0 +1,25 @@
+{
+  "name": "@bh/core",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Server-only game core: persistence, migrations, validated command layer, ledger, simulation tick, AI companies.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "migrate": "tsx src/db/migrate-cli.ts",
+    "seed": "tsx src/db/seed-cli.ts"
+  },
+  "dependencies": {
+    "@bh/contracts": "workspace:*",
+    "@bh/domain": "workspace:*",
+    "pg": "^8.23.1",
+    "pino": "^10.4.0",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@types/pg": "^8.23.1"
+  }
+}

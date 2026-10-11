@@ -1,0 +1,17 @@
+{
+  "name": "@bh/contracts",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "API request/response schemas and realtime event types shared by client and server.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "zod": "^4.6.5",
+    "@bh/domain": "workspace:*"
+  }
+}
