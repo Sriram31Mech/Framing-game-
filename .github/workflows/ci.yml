@@ -1,0 +1,207 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+# Least privilege by default; jobs widen only what they need.
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  NODE_VERSION: '22'
+  # Never use real secrets in CI; these are throwaway values for the ephemeral services below.
+  TEST_DATABASE_URL: postgres://bh:bh_ci_password@localhost:5432/bharat_harvest_test
+
+jobs:
+  checks:
+    name: Typecheck, lint, format, unit tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+      - run: pnpm lint
+      - run: pnpm format:check
+      - run: pnpm test
+      - name: Typecheck load test
+        run: pnpm exec tsc --noEmit -p tests/load/tsconfig.json
+      - name: Shellcheck scripts
+        run: shellcheck -x scripts/*.sh scripts/lib/*.sh
+
+  integration:
+    name: Integration tests (Postgres + PostGIS)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres:
+        # GitHub-hosted runners are amd64, where the upstream PostGIS image is available.
+        image: postgis/postgis:17-3.5
+        env:
+          POSTGRES_USER: bh
+          POSTGRES_PASSWORD: bh_ci_password
+          POSTGRES_DB: bharat_harvest_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U bh -d bharat_harvest_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Create per-suite test databases (mirrors infra/docker/initdb)
+        env:
+          PGPASSWORD: bh_ci_password
+        run: |
+          for db in bharat_harvest_test_backend bharat_harvest_test_sim bharat_harvest_test_e2e; do
+            psql -h localhost -U bh -d postgres -v ON_ERROR_STOP=1 -c "CREATE DATABASE $db OWNER bh"
+          done
+      - run: pnpm test:integration
+
+  build:
+    name: Build + Docker image
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - name: Validate production compose file
+        run: |
+          cp infra/docker/production.env.example infra/docker/.env.production
+          docker compose -f infra/docker/compose.prod.yml --env-file infra/docker/.env.production config --quiet
+          rm infra/docker/.env.production
+      - uses: docker/setup-buildx-action@v3
+      - name: Build app image (no push)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: infra/docker/app.Dockerfile
+          push: false
+          load: true
+          tags: bharat-harvest/app:ci
+          build-args: |
+            GIT_SHA=${{ github.sha }}
+          cache-from: type=gha,scope=app
+          cache-to: type=gha,scope=app,mode=max
+      - name: Smoke-test image layout
+        run: |
+          docker run --rm --entrypoint sh bharat-harvest/app:ci -c '
+            test -f apps/server/dist/main.js &&
+            test -f apps/worker/dist/main.js &&
+            test -f packages/core/dist/migrate.js &&
+            test -f client/index.html &&
+            ls migrations/*.sql >/dev/null &&
+            test "$(id -un)" = node'
+      - name: Build backup image (no push)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: infra/docker/backup.Dockerfile
+          push: false
+          cache-from: type=gha,scope=backup
+          cache-to: type=gha,scope=backup,mode=max
+      - name: Build database image (no push)
+        uses: docker/build-push-action@v6
+        with:
+          context: infra/docker/db
+          push: false
+          cache-from: type=gha,scope=db
+          cache-to: type=gha,scope=db,mode=max
+
+  e2e:
+    name: End-to-end (Playwright)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: [checks]
+    env:
+      APP_ENV: test
+      DATABASE_URL: postgres://bh:bh_dev_password@localhost:54329/bharat_harvest_test_e2e
+      SESSION_SECRET: ci-only-session-secret-0123456789abcdef
+      ENABLE_DEV_AUTH: 'true'
+      ENABLE_DEV_ADMIN: 'true'
+      PORT: '8080'
+      PUBLIC_CLIENT_URL: http://localhost:8080
+      SERVE_CLIENT_DIR: ${{ github.workspace }}/apps/client/dist
+      E2E_BASE_URL: http://localhost:8080
+    steps:
+      - uses: actions/checkout@v5
+      # hashFiles() is not available in job-level `if`, so detect specs in a step.
+      - name: Detect e2e specs
+        id: detect
+        run: |
+          if find tests/e2e -name '*.spec.ts' 2>/dev/null | grep -q .; then
+            echo "has_specs=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_specs=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::No Playwright specs in tests/e2e yet; skipping e2e."
+          fi
+      - if: steps.detect.outputs.has_specs == 'true'
+        uses: pnpm/action-setup@v4
+      - if: steps.detect.outputs.has_specs == 'true'
+        uses: actions/setup-node@v5
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - if: steps.detect.outputs.has_specs == 'true'
+        run: pnpm install --frozen-lockfile
+      - if: steps.detect.outputs.has_specs == 'true'
+        name: Install Playwright browsers
+        run: pnpm exec playwright install --with-deps chromium
+      - if: steps.detect.outputs.has_specs == 'true'
+        name: Start database (docker compose)
+        run: |
+          docker compose up -d --wait db
+      - if: steps.detect.outputs.has_specs == 'true'
+        name: Build, migrate, seed
+        run: |
+          pnpm build
+          pnpm db:migrate
+          pnpm db:seed
+      - if: steps.detect.outputs.has_specs == 'true'
+        name: Start server and worker
+        run: |
+          nohup node apps/server/dist/main.js > server.log 2>&1 &
+          nohup node apps/worker/dist/main.js > worker.log 2>&1 &
+          for _ in $(seq 1 60); do
+            curl -fsS http://localhost:8080/healthz && exit 0
+            sleep 1
+          done
+          echo "server did not become healthy" && cat server.log && exit 1
+      - if: steps.detect.outputs.has_specs == 'true'
+        run: pnpm e2e
+      - if: failure() && steps.detect.outputs.has_specs == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-artifacts
+          path: |
+            playwright-report/
+            test-results/
+            server.log
+            worker.log
+          retention-days: 7

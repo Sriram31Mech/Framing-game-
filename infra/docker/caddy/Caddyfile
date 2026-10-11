@@ -1,0 +1,56 @@
+# Edge proxy for Bharat Harvest (infra/docker/compose.prod.yml).
+# Automatic HTTPS (Let's Encrypt / ZeroSSL) for {$DOMAIN}; everything is proxied to the API server,
+# which also serves the built client (SERVE_CLIENT_DIR) and the WebSocket at /api/v1/ws.
+{
+	email {$ACME_EMAIL}
+	# Uncomment to test against the Let's Encrypt staging CA first (avoids rate limits):
+	# acme_ca https://acme-staging-v02.api.letsencrypt.org/directory
+}
+
+{$DOMAIN} {
+	encode zstd gzip
+
+	# Defence in depth: never expose metrics or dev/admin endpoints publicly, even though the
+	# server already refuses dev endpoints when APP_ENV=production.
+	@internal path /metrics /metrics/* /api/v1/dev /api/v1/dev/*
+	respond @internal 404
+
+	request_body {
+		max_size 1MB
+	}
+
+	# Security headers. `defer` applies them after the upstream response so ours win; the app's
+	# helmet middleware owns Content-Security-Policy.
+	header {
+		defer
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=()"
+		Cross-Origin-Opener-Policy "same-origin"
+		-Server
+		-X-Powered-By
+	}
+
+	# Long-lived caching for content-hashed Vite assets.
+	@hashed path /assets/*
+	header @hashed {
+		defer
+		Cache-Control "public, max-age=31536000, immutable"
+	}
+
+	# /api/*, /api/v1/ws (WebSocket upgrade is handled transparently), /healthz and the client.
+	reverse_proxy server:8080 {
+		header_up X-Real-IP {remote_host}
+		health_uri /healthz
+		health_interval 15s
+		# Keep long-lived WebSocket connections open across config reloads for a while.
+		stream_close_delay 5m
+	}
+
+	log {
+		output stdout
+		format json
+	}
+}

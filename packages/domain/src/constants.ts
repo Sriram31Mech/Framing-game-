@@ -12,6 +12,11 @@ export const START_MONTH = 6;
 export const SEASON_LENGTH_DAYS = 120;
 /** Starting cash for a new human company: ₹5,00,000. */
 export const STARTING_CASH_PAISE: Paise = 500_000_00;
+/**
+ * AI companies represent established regional agribusinesses: they start with more capital
+ * (₹25,00,000) so they can compete for full-size parcels from day one.
+ */
+export const AI_STARTING_CASH_PAISE: Paise = 2_500_000_00;
 /** Cash given instead of a starter plot if none remain: ₹1,50,000. */
 export const NO_STARTER_PLOT_BONUS_PAISE: Paise = 150_000_00;
 /** Fresh-start grant after bankruptcy: ₹2,00,000. */

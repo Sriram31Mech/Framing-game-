@@ -1,0 +1,36 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 10
+    groups:
+      # Batch routine minor/patch bumps into one PR; majors arrive individually.
+      npm-minor-patch:
+        update-types: [minor, patch]
+    labels: [dependencies]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    groups:
+      actions:
+        patterns: ['*']
+    labels: [dependencies, ci]
+
+  - package-ecosystem: docker
+    directories:
+      - /infra/docker
+      - /infra/docker/db
+    schedule:
+      interval: monthly
+    labels: [dependencies, docker]
+
+  - package-ecosystem: docker-compose
+    directory: /infra/docker
+    schedule:
+      interval: monthly
+    labels: [dependencies, docker]

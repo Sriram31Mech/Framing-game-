@@ -534,8 +534,16 @@ export const NotificationDto = z.object({
   read: z.boolean(),
 });
 export type NotificationDto = z.infer<typeof NotificationDto>;
+/**
+ * Boolean query-string flag. (z.coerce.boolean() would turn the string "false" into true.)
+ * Accepts true/false/1/0 strings or real booleans.
+ */
+const QueryFlag = z
+  .union([z.boolean(), z.enum(['true', 'false', '1', '0'])])
+  .transform((v) => v === true || v === 'true' || v === '1');
+
 export const NotificationsQuery = z.object({
-  unreadOnly: z.coerce.boolean().default(false),
+  unreadOnly: QueryFlag.default(false),
   limit: z.coerce.number().int().min(1).max(100).default(50),
 });
 export const NotificationsResponse = z.object({
@@ -620,7 +628,7 @@ export const ListingDto = z.object({
 export type ListingDto = z.infer<typeof ListingDto>;
 export const ListingsQuery = z.object({
   itemId: ITEM_ID.optional(),
-  mine: z.coerce.boolean().default(false),
+  mine: QueryFlag.default(false),
   status: z.enum(['open', 'filled', 'cancelled', 'expired']).default('open'),
   limit: z.coerce.number().int().min(1).max(100).default(50),
 });

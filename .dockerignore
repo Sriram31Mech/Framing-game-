@@ -1,0 +1,46 @@
+# Keep the Docker build context small and free of secrets.
+# Version control / editor
+.git
+.github
+.vscode
+.idea
+**/.DS_Store
+
+# Dependencies and build outputs (rebuilt inside the image)
+**/node_modules
+**/dist
+**/build
+**/.vite
+**/*.tsbuildinfo
+apps/desktop/out
+
+# Secrets and local environment — never send to the daemon
+.env
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+infra/docker/caddy/data
+*.pem
+*.key
+
+# Test, coverage and tooling artefacts
+coverage
+playwright-report
+test-results
+tests/load/results
+*.log
+
+# Backups and dumps
+backups
+**/backups
+*.dump
+*.dump.sha256
+
+# Docs and design sources are not needed at runtime
+docs
+assets/source
+
+# Cross-package tests are not part of the image
+tests

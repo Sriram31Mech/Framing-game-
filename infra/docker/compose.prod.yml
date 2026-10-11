@@ -1,0 +1,246 @@
+# Production stack for a single small VPS (sized for 2 vCPU / 4 GB RAM).
+#
+#   cp infra/docker/production.env.example infra/docker/.env.production   # fill in; never commit
+#   docker compose -f infra/docker/compose.prod.yml --env-file infra/docker/.env.production build
+#   docker compose -f infra/docker/compose.prod.yml --env-file infra/docker/.env.production up -d
+#
+# Services: db (PostGIS, private), migrate (one-shot), server (API + client + WebSocket),
+# worker (simulation), caddy (HTTPS edge), backup (daily pg_dump + weekly restore drill).
+# See docs/RUNBOOK.md for deploy, rollback, backups and incident procedures.
+name: bharat-harvest
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: '10m'
+    max-file: '5'
+
+x-app-build: &app-build
+  context: ../..
+  dockerfile: infra/docker/app.Dockerfile
+
+x-app: &app
+  image: ${APP_IMAGE:-bharat-harvest/app:latest}
+  build: *app-build
+  init: true
+  env_file:
+    - path: .env.production
+      required: true
+  environment: &app-env
+    APP_ENV: production
+    NODE_ENV: production
+    DATABASE_URL: postgres://bh:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}@db:5432/bharat_harvest
+    MIGRATIONS_DIR: /app/migrations
+    SERVE_CLIENT_DIR: /app/client
+    TRUST_PROXY: 'true'
+    ENABLE_DEV_AUTH: 'false'
+    ENABLE_DEV_ADMIN: 'false'
+  read_only: true
+  tmpfs:
+    - /tmp:size=64m
+  security_opt:
+    - no-new-privileges:true
+  cap_drop:
+    - ALL
+  logging: *logging
+
+services:
+  db:
+    build: ./db
+    image: bharat-harvest/postgis:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: bh
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+      POSTGRES_DB: bharat_harvest
+      POSTGRES_INITDB_ARGS: --data-checksums
+    # Tuned for ~1.5 GB of the VPS. Not published on any host port.
+    command:
+      - postgres
+      - -c
+      - max_connections=60
+      - -c
+      - shared_buffers=384MB
+      - -c
+      - effective_cache_size=1GB
+      - -c
+      - work_mem=8MB
+      - -c
+      - maintenance_work_mem=128MB
+      - -c
+      - wal_buffers=16MB
+      - -c
+      - wal_compression=on
+      - -c
+      - min_wal_size=256MB
+      - -c
+      - max_wal_size=1GB
+      - -c
+      - checkpoint_completion_target=0.9
+      - -c
+      - random_page_cost=1.1
+      - -c
+      - effective_io_concurrency=200
+      - -c
+      - idle_in_transaction_session_timeout=60s
+      - -c
+      - log_min_duration_statement=500ms
+      - -c
+      - log_lock_waits=on
+      - -c
+      - log_checkpoints=on
+    shm_size: 256mb
+    volumes:
+      - bh_db_data:/var/lib/postgresql/data
+    networks: [backend]
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U bh -d bharat_harvest']
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+    stop_grace_period: 60s
+    deploy:
+      resources:
+        limits: { cpus: '1.0', memory: 1536M }
+    logging: *logging
+
+  migrate:
+    <<: *app
+    command: ['node', 'packages/core/dist/migrate.js']
+    restart: 'no'
+    depends_on:
+      db: { condition: service_healthy }
+    networks: [backend]
+    healthcheck:
+      disable: true
+    deploy:
+      resources:
+        limits: { cpus: '0.5', memory: 256M }
+
+  server:
+    <<: *app
+    command: ['node', 'apps/server/dist/main.js']
+    restart: unless-stopped
+    environment:
+      <<: *app-env
+      PORT: '8080'
+      HOST: 0.0.0.0
+      DATABASE_POOL_MAX: ${SERVER_DATABASE_POOL_MAX:-20}
+      NODE_OPTIONS: --enable-source-maps --max-old-space-size=512
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+    # backend: database; edge: Caddy + outbound HTTPS (Steam Web API ticket validation).
+    networks: [backend, edge]
+    expose: ['8080']
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:8080/healthz').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))"
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    stop_grace_period: 30s
+    deploy:
+      resources:
+        limits: { cpus: '1.0', memory: 768M }
+
+  worker:
+    <<: *app
+    command: ['node', 'apps/worker/dist/main.js']
+    restart: unless-stopped
+    environment:
+      <<: *app-env
+      DATABASE_POOL_MAX: ${WORKER_DATABASE_POOL_MAX:-5}
+      WORKER_METRICS_PORT: '9464'
+      NODE_OPTIONS: --enable-source-maps --max-old-space-size=384
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+    networks: [backend]
+    healthcheck:
+      # Worker health on its metrics port (internal only); 503 when the tick loop stalls.
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:9464/healthz').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))"
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    stop_grace_period: 30s
+    deploy:
+      resources:
+        limits: { cpus: '0.75', memory: 512M }
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    environment:
+      DOMAIN: ${DOMAIN:?set DOMAIN}
+      ACME_EMAIL: ${ACME_EMAIL:?set ACME_EMAIL}
+    ports:
+      - '80:80'
+      - '443:443'
+      - '443:443/udp'
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      server: { condition: service_healthy }
+    networks: [edge]
+    cap_drop: [ALL]
+    cap_add: [NET_BIND_SERVICE]
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits: { cpus: '0.5', memory: 128M }
+    logging: *logging
+
+  backup:
+    build:
+      context: ../..
+      dockerfile: infra/docker/backup.Dockerfile
+    image: bharat-harvest/backup:latest
+    restart: unless-stopped
+    init: true
+    environment:
+      DATABASE_URL: postgres://bh:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}@db:5432/bharat_harvest
+      BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-14}
+      BACKUP_MIN_KEEP: ${BACKUP_MIN_KEEP:-3}
+      BACKUP_AT: ${BACKUP_AT:-02:30}
+      RESTORE_DRILL_WEEKDAY: ${RESTORE_DRILL_WEEKDAY-7}
+      BACKUP_UPLOAD_CMD: ${BACKUP_UPLOAD_CMD:-}
+    # Optional credentials for BACKUP_UPLOAD_CMD (e.g. AWS_ACCESS_KEY_ID / RCLONE_CONFIG_*).
+    env_file:
+      - path: .env.backup
+        required: false
+    volumes:
+      - bh_backups:/backups
+    depends_on:
+      db: { condition: service_healthy }
+    # backend: database; edge: outbound access for off-site uploads.
+    networks: [backend, edge]
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits: { cpus: '0.5', memory: 256M }
+    logging: *logging
+
+networks:
+  # No route to the internet and not reachable from outside: database traffic only.
+  backend:
+    internal: true
+  edge: {}
+
+volumes:
+  bh_db_data:
+  bh_backups:
+  caddy_data:
+  caddy_config:

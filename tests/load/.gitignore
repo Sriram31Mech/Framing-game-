@@ -1,0 +1,2 @@
+# Load-test result files (pnpm load --out tests/load/results/<name>.json)
+results/

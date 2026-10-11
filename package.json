@@ -19,6 +19,7 @@
     "test:integration": "vitest run --project integration",
     "test:all": "vitest run",
     "e2e": "playwright test",
+    "load": "tsx tests/load/run.ts",
     "db:up": "docker compose up -d db",
     "db:down": "docker compose down",
     "db:migrate": "pnpm --filter @bh/core migrate",
