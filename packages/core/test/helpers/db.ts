@@ -28,9 +28,9 @@ export function testConfig(overrides: Partial<AppConfig> = {}): AppConfig {
 }
 
 export async function resetTestDb(): Promise<DbPool> {
-  if (!/_test\b/.test(TEST_DATABASE_URL)) {
+  if (!/\/[A-Za-z0-9_]*_test[A-Za-z0-9_]*(\?|$)/.test(TEST_DATABASE_URL)) {
     throw new Error(
-      `Refusing to reset a database whose name does not end in _test: ${TEST_DATABASE_URL}`,
+      `Refusing to reset a database whose name does not contain _test: ${TEST_DATABASE_URL}`,
     );
   }
   const pool = createPool(TEST_DATABASE_URL, { max: 30, applicationName: 'bh-tests' });
