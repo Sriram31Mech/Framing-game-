@@ -13,7 +13,7 @@ import { createCompany } from '../../src/companies/create';
 import { findLedgerMismatches, postLedger } from '../../src/ledger/ledger';
 import type { AuthContext } from '../../src/auth/sessions';
 
-export const REGION = 'hemavati';
+export const REGION = 'tamil-nadu';
 
 /** Fresh migrated DB + bootstrapped world. */
 export async function setupWorld(overrides: Partial<AppConfig> = {}): Promise<CoreDeps> {

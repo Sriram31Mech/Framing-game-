@@ -196,6 +196,14 @@ describe('plant → harvest → sell', () => {
     // Market price moved down by the sale's volume.
     const after = await getSaleQuote(deps, a.auth, marketId, { itemId: 'rice', quantityKg: 1 });
     expect(after.unitPricePaise).toBeLessThanOrEqual(quote.unitPricePaise);
+    // One Tamil Nadu price: the sale moved the state of every mandi, not just the one sold at.
+    const states = await deps.pool.query<{ n: number; mandis: number }>(
+      `SELECT COUNT(DISTINCT (price_paise_per_kg, supply_pressure_kg, demand_kg_per_day))::int AS n,
+              COUNT(*)::int AS mandis
+       FROM market_item_states WHERE item_id = 'rice'`,
+    );
+    expect(states.rows[0]).toEqual({ n: 1, mandis: expect.any(Number) });
+    expect(states.rows[0]!.mandis).toBeGreaterThan(1);
     await expectLedgerReconciles(deps);
   });
 

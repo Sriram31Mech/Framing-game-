@@ -7,6 +7,9 @@ import type {
   ParcelDetailResponse,
   ParcelSuitabilityResponse,
   RegionMapResponse,
+  DistrictDto,
+  SegmentDetailResponse,
+  SegmentSummaryDto,
   WorldResponse,
 } from '@bh/contracts';
 import {
@@ -17,6 +20,12 @@ import {
   getCrop,
   landTaxPaise,
   toGameDate,
+  climateForEnv,
+  districtClimate,
+  TN_DISTRICTS,
+  ZONE_PROFILES,
+  type GeneratedDistrict,
+  type GeneratedSegment,
 } from '@bh/domain';
 import { getAccount } from '../auth/accounts';
 import type { AuthContext } from '../auth/sessions';
@@ -73,21 +82,98 @@ export async function getWorld(deps: CoreDeps, auth: AuthContext): Promise<World
   };
 }
 
-export async function getRegionMap(deps: CoreDeps, regionId: string): Promise<RegionMapResponse> {
+interface SegmentStatsRow {
+  segment_id: string;
+  holdings: number;
+  for_sale: number;
+  min_price: number | null;
+  mine: number;
+}
+
+async function segmentStats(
+  deps: CoreDeps,
+  regionId: string,
+  companyId: string | null,
+  segmentId?: string,
+): Promise<Map<string, SegmentStatsRow>> {
+  const { rows } = await deps.pool.query<SegmentStatsRow>(
+    `SELECT p.env->>'segmentId' AS segment_id,
+            COUNT(*)::int AS holdings,
+            COUNT(*) FILTER (WHERE p.status = 'for_sale')::int AS for_sale,
+            MIN(p.list_price_paise) FILTER (WHERE p.status = 'for_sale') AS min_price,
+            COUNT(*) FILTER (WHERE $2::uuid IS NOT NULL
+                             AND (p.owner_company_id = $2 OR l.lessee_company_id = $2))::int AS mine
+     FROM land_parcels p
+     LEFT JOIN land_leases l ON l.parcel_id = p.id AND l.status = 'active'
+     WHERE p.region_id = $1 AND ($3::text IS NULL OR p.env->>'segmentId' = $3)
+     GROUP BY 1`,
+    [regionId, companyId, segmentId ?? null],
+  );
+  return new Map(rows.map((r) => [r.segment_id, r]));
+}
+
+function toSegmentSummary(
+  s: GeneratedSegment,
+  stats: SegmentStatsRow | undefined,
+): SegmentSummaryDto {
+  return {
+    id: s.id,
+    name: s.name,
+    districtId: s.districtId,
+    polygon: s.polygon,
+    centroid: s.centroid,
+    areaHa: s.areaHa,
+    farmlandHa: s.farmlandHa,
+    holdings: stats?.holdings ?? 0,
+    holdingsForSale: stats?.for_sale ?? 0,
+    minPricePaise: stats?.min_price ?? null,
+    mine: stats?.mine ?? 0,
+  };
+}
+
+function toDistrictDto(d: GeneratedDistrict): DistrictDto {
+  const profile = TN_DISTRICTS[d.id];
+  return {
+    id: d.id,
+    name: d.name,
+    tamilName: d.tamilName,
+    zone: d.zone,
+    polygons: d.polygons,
+    centroid: d.centroid,
+    annualRainMm: profile?.annualRainMm ?? 0,
+    knownFor: profile?.knownFor ?? [],
+  };
+}
+
+/**
+ * The real Tamil Nadu map: district outlines, segments with holding stats, and only the
+ * holdings someone operates (state land is browsed per segment via getSegmentDetail).
+ */
+export async function getRegionMap(
+  deps: CoreDeps,
+  regionId: string,
+  companyId: string | null = null,
+): Promise<RegionMapResponse> {
   const region = await getRegion(deps.pool, regionId);
-  const [parcels, markets] = await Promise.all([
+  const [parcels, markets, stats] = await Promise.all([
     deps.pool.query<ParcelSummaryDbRow>(
-      `${PARCEL_SUMMARY_SQL} WHERE p.region_id = $1 ORDER BY p.id`,
+      `${PARCEL_SUMMARY_SQL}
+       WHERE p.region_id = $1 AND (p.owner_company_id IS NOT NULL OR l.lessee_company_id IS NOT NULL)
+       ORDER BY p.id`,
       [regionId],
     ),
     listMarkets(deps.pool, regionId),
+    segmentStats(deps, regionId, companyId),
   ]);
+  const features = region.mapFeatures;
   return {
     region: { id: region.id, name: region.name, seed: region.seed, halfSizeM: region.halfSizeM },
+    districts: (features.districts ?? []).map(toDistrictDto),
+    segments: (features.segments ?? []).map((s) => toSegmentSummary(s, stats.get(s.id))),
     parcels: parcels.rows.map(toParcelSummary),
-    roads: region.mapFeatures.roads,
-    river: region.mapFeatures.river,
-    features: region.mapFeatures.features,
+    roads: features.roads,
+    river: features.river,
+    features: features.features,
     markets: markets.map((m) => ({
       id: m.id,
       name: m.name,
@@ -95,7 +181,46 @@ export async function getRegionMap(deps: CoreDeps, regionId: string): Promise<Re
       y: m.y,
       feeBps: m.feeBps,
       demandScale: m.demandScale,
-      priceScale: m.priceScale,
+    })),
+  };
+}
+
+/** One segment: its district's climate and soils, and every holding in it. */
+export async function getSegmentDetail(
+  deps: CoreDeps,
+  auth: AuthContext,
+  segmentId: string,
+): Promise<SegmentDetailResponse> {
+  const region = await getRegion(deps.pool, auth.regionId);
+  const segment = (region.mapFeatures.segments ?? []).find((s) => s.id === segmentId);
+  if (!segment) throw notFound('Segment', segmentId);
+  const district = (region.mapFeatures.districts ?? []).find((d) => d.id === segment.districtId);
+  const profile = TN_DISTRICTS[segment.districtId];
+  if (!district || !profile) throw notFound('District', segment.districtId);
+  const [rows, stats] = await Promise.all([
+    deps.pool.query<ParcelSummaryDbRow & { base_price_paise: number; lease_rent_paise: number }>(
+      `${PARCEL_SUMMARY_SQL.replace('p.is_starter_plot,', 'p.is_starter_plot, p.base_price_paise, p.lease_rent_paise,')}
+       WHERE p.region_id = $1 AND p.env->>'segmentId' = $2 ORDER BY p.id`,
+      [auth.regionId, segmentId],
+    ),
+    segmentStats(deps, auth.regionId, auth.companyId, segmentId),
+  ]);
+  const climate = districtClimate(segment.districtId);
+  const { polygons: _polygons, ...districtInfo } = toDistrictDto(district);
+  return {
+    segment: toSegmentSummary(segment, stats.get(segmentId)),
+    district: {
+      ...districtInfo,
+      zoneLabel: ZONE_PROFILES[profile.zone].label,
+      monthlyRainMm: climate.monthlyRainMm,
+      monthlyMeanTempC: climate.monthlyMeanTempC,
+      soils: profile.soils as Record<string, number>,
+      water: profile.water as Record<string, number>,
+    },
+    holdings: rows.rows.map((r) => ({
+      ...toParcelSummary(r),
+      basePricePaise: r.base_price_paise,
+      leaseRentPaisePerSeason: r.lease_rent_paise,
     })),
   };
 }
@@ -231,7 +356,7 @@ export async function getParcelSuitability(
   ]);
   const effects = auth.companyId ? await machineryEffectsFor(deps.pool, auth.companyId) : null;
   const irrigationAvailable = canIrrigate(parcel.env, effects?.enablesDryIrrigation ?? false);
-  const results = computeAllSuitability(parcel.env, region.climate, {
+  const results = computeAllSuitability(parcel.env, climateForEnv(parcel.env, region.climate), {
     sowingDay: clock.gameDay,
     irrigated: irrigationAvailable,
   });

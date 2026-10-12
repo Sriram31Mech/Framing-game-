@@ -67,7 +67,7 @@ export function Dialog({
     >
       <div
         ref={ref}
-        className={`bh-dialog${wide ? ' wide' : ''}`}
+        className={`bh-dialog bh-scroll${wide ? ' wide' : ''}`}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}

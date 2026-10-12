@@ -634,7 +634,7 @@ async function runPlayer(i: number, devAuth: boolean): Promise<void> {
   const p: PlayerState = {
     client: new Client(i),
     companyId: null,
-    regionId: 'hemavati',
+    regionId: 'tamil-nadu',
     map: null,
     crops: null,
     markets: null,

@@ -12,7 +12,7 @@ import { Logo } from '../../ui/Logo';
 
 const LandingWorld = lazy(() => import('../../world/LandingWorld'));
 
-const SUGGESTIONS = ['Hemavati Agro', 'Malnad Fields Co', 'Kaveri Krishi', 'Red Earth Farms'];
+const SUGGESTIONS = ['Kaveri Krishi', 'Kongu Agro', 'Thanjavur Harvest Co', 'Red Earth Farms'];
 
 export function CreateCompanyScreen({ me }: { me: MeResponse }) {
   const [name, setName] = useState('');
@@ -61,7 +61,7 @@ export function CreateCompanyScreen({ me }: { me: MeResponse }) {
                 value={name}
                 maxLength={40}
                 autoFocus
-                placeholder="e.g. Hemavati Agro"
+                placeholder="e.g. Kaveri Krishi"
                 onChange={(e) => setName(e.target.value)}
                 aria-invalid={touched && !!issue}
                 data-testid="company-name-input"
@@ -90,10 +90,11 @@ export function CreateCompanyScreen({ me }: { me: MeResponse }) {
             <div className="bh-callout info">
               <Icon name="info" size={16} />
               <div>
-                You start with <strong>{money(STARTING_CASH_PAISE)}</strong> and a small reserved
-                starter plot (or {money(NO_STARTER_PLOT_BONUS_PAISE)} extra cash if none remain).
-                The valley keeps simulating while you are offline — crops grow, taxes and loan
-                instalments fall due.
+                You start with <strong>{money(STARTING_CASH_PAISE)}</strong> and your
+                grandfather&apos;s small field somewhere in Tamil Nadu (or{' '}
+                {money(NO_STARTER_PLOT_BONUS_PAISE)} extra cash if none remain). Muthu Thatha will
+                show you around. Tamil Nadu keeps simulating while you are offline — crops grow,
+                taxes and loan instalments fall due.
               </div>
             </div>
             {create.isError ? (

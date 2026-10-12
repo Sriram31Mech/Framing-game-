@@ -19,7 +19,7 @@ import { computePlantingCost } from '../commands/farming';
 import { executeCommand } from '../commands/execute';
 import type { Actor, CommandOutcome, CoreDeps, GameCommand } from '../commands/types';
 import { computeBalanceSheet, loanOfferFor } from '../companies/valuation';
-import { bestMandiPricePaise } from '../world/region';
+import { statewidePricePaise } from '../world/region';
 import { buildAiWorldView } from './view';
 
 export interface AiRunResult {
@@ -198,7 +198,7 @@ export async function intentToCommand(
       if (intent.quantityKg <= 0) return null;
       // Keep the asking price inside the anti-manipulation band the command enforces.
       const [floor, ceiling] = p2pPriceBand(
-        await bestMandiPricePaise(deps.pool, regionId, intent.itemId),
+        await statewidePricePaise(deps.pool, regionId, intent.itemId),
       );
       return {
         type: 'create_listing',

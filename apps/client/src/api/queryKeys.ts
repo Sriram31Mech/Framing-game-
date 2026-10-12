@@ -36,6 +36,8 @@ export const qk = {
   me: () => ['me'] as const,
   world: () => ['world'] as const,
   map: (regionId: string) => ['map', regionId] as const,
+  /** Under the 'map' prefix so any map invalidation refreshes open segments too. */
+  segment: (segmentId: string) => ['map', 'segment', segmentId] as const,
   parcel: (parcelId: string) => ['parcel', parcelId] as const,
   suitability: (parcelId: string) => ['suitability', parcelId] as const,
   crops: () => ['crops'] as const,

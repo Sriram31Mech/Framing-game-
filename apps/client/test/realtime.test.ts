@@ -14,7 +14,7 @@ function ev(
     id: '00000000-0000-4000-8000-000000000001',
     type,
     schemaVersion: 1,
-    regionId: 'hemavati',
+    regionId: 'tamil-nadu',
     companyId: null,
     entityType: null,
     entityId: null,
@@ -32,12 +32,12 @@ describe('event → invalidation mapping', () => {
     for (const r of ['world', 'plots', 'overview', 'map']) expect(k).toContain(r);
   });
   it('parcel events refresh the map and that parcel only', () => {
-    expect(keys(ev('parcel.ownership_changed', { parcelId: 'HV-007' }))).toEqual([
+    expect(keys(ev('parcel.ownership_changed', { parcelId: 'TN-002-03' }))).toEqual([
       'map',
-      'parcel:HV-007',
+      'parcel:TN-002-03',
       'leaderboard',
     ]);
-    expect(keys(ev('parcel.updated', { parcelId: 'HV-001' }))).toContain('parcel:HV-001');
+    expect(keys(ev('parcel.updated', { parcelId: 'TN-001-02' }))).toContain('parcel:TN-001-02');
   });
   it('market prices refresh markets, history and quotes', () => {
     expect(keys(ev('market.price_updated'))).toEqual(['markets', 'priceHistory', 'quote']);
@@ -53,9 +53,9 @@ describe('event → invalidation mapping', () => {
       type: 'crop.ready',
       severity: 'success',
       title: 'Rice is ready',
-      body: 'Harvest HV-001 within 10 days',
+      body: 'Harvest TN-001-02 within 10 days',
       entityType: 'parcel',
-      entityId: 'HV-001',
+      entityId: 'TN-001-02',
       gameDay: 10,
       createdAt: '2026-10-11T00:00:00.000Z',
       read: false,
@@ -64,7 +64,7 @@ describe('event → invalidation mapping', () => {
     expect(toastForEvent(e)).toEqual({
       severity: 'success',
       title: 'Rice is ready',
-      body: 'Harvest HV-001 within 10 days',
+      body: 'Harvest TN-001-02 within 10 days',
     });
     expect(toastForEvent(ev('notification.created', { junk: true }))).toBeNull();
     expect(toastForEvent(ev('company.updated'))).toBeNull();

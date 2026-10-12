@@ -1,5 +1,10 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { generateRegion, NO_STARTER_PLOT_BONUS_PAISE, STARTING_CASH_PAISE } from '@bh/domain';
+import {
+  generateRegion,
+  NO_STARTER_PLOT_BONUS_PAISE,
+  STARTER_GRANT_MAX_HA,
+  STARTING_CASH_PAISE,
+} from '@bh/domain';
 import type { CoreDeps } from '../../src/commands/types';
 import { bootstrapWorld } from '../../src/world/bootstrap';
 import { createCompany } from '../../src/companies/create';
@@ -91,6 +96,24 @@ describe('createCompany', () => {
     await expectLedgerReconciles(deps);
   });
 
+  it('grants each new company a random farmland starter plot, not simply the next by id', async () => {
+    const reserved = await deps.pool.query<{ id: string }>(
+      `SELECT id FROM land_parcels WHERE status = 'reserved' AND is_starter_plot ORDER BY id LIMIT 4`,
+    );
+    const players = [];
+    for (let i = 0; i < 4; i++) players.push(await newPlayer(deps));
+    const ids = players.map((p) => p.starterParcelId);
+    expect(new Set(ids).size).toBe(4);
+    // ORDER BY id would hand out exactly these four; a hash-random pick does so ~1 in a million.
+    expect([...ids].sort()).not.toEqual(reserved.rows.map((r) => r.id));
+    const districts = await deps.pool.query<{ district: string | null }>(
+      `SELECT env->>'districtId' AS district FROM land_parcels WHERE id = ANY($1)`,
+      [ids],
+    );
+    expect(districts.rows.every((r) => r.district && r.district !== 'chennai')).toBe(true);
+    await expectLedgerReconciles(deps);
+  });
+
   it('enforces one company per account, idempotent retry, and unique names', async () => {
     const p = await newPlayer(deps, 'Tunga Agro');
     const again = await createCompany(deps, {
@@ -111,9 +134,23 @@ describe('createCompany', () => {
     await expect(newPlayer(deps, 'TUNGA AGRO')).rejects.toMatchObject({ code: 'CONFLICT' });
   });
 
-  it('pays the bonus when starter plots run out and enforces region capacity', async () => {
+  it('grants a small state holding when starter plots run out, the bonus only when no land is left, and enforces region capacity', async () => {
     await deps.pool.query(
       `UPDATE land_parcels SET status = 'for_sale', list_price_paise = base_price_paise WHERE status = 'reserved'`,
+    );
+    const landed = await newPlayer(deps);
+    const granted = await deps.pool.query<{ area_ha: string; status: string; owner: string }>(
+      'SELECT area_ha, status, owner_company_id AS owner FROM land_parcels WHERE id = $1',
+      [landed.starterParcelId],
+    );
+    expect(granted.rows[0]).toMatchObject({ status: 'owned', owner: landed.companyId });
+    expect(Number(granted.rows[0]!.area_ha)).toBeLessThanOrEqual(STARTER_GRANT_MAX_HA);
+    expect(await cashOf(deps, landed.companyId)).toBe(STARTING_CASH_PAISE);
+
+    // No small state land left at all: cash instead.
+    await deps.pool.query(
+      `UPDATE land_parcels SET status = 'leased' WHERE status = 'for_sale' AND area_ha <= $1`,
+      [STARTER_GRANT_MAX_HA],
     );
     const p = await newPlayer(deps);
     expect(p.starterParcelId).toBeNull();

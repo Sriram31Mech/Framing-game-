@@ -1,93 +1,72 @@
 /**
- * Onboarding state: tracks which tutorial steps the player has completed.
- * Persisted in localStorage so it survives page reloads but resets on a new company.
+ * Onboarding (story intro + guided tour with Muthu Thatha). Persisted in localStorage so the tour
+ * resumes after a reload; resets when a different company is played.
  */
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-export type OnboardingStep =
-  'welcome' | 'inspect_land' | 'buy_or_lease' | 'plant_crop' | 'harvest' | 'sell';
+export type TourStepId =
+  'find_land' | 'open_plot' | 'plant' | 'grow' | 'harvest' | 'sell' | 'finance';
 
-const STEPS: OnboardingStep[] = [
-  'welcome',
-  'inspect_land',
-  'buy_or_lease',
-  'plant_crop',
+export const TOUR_STEPS: TourStepId[] = [
+  'find_land',
+  'open_plot',
+  'plant',
+  'grow',
   'harvest',
   'sell',
+  'finance',
 ];
 
+export const XP_PER_STEP = 50;
+
 interface OnboardingState {
-  /** Company id this onboarding belongs to (resets when a new company is created). */
+  /** Company this progress belongs to. */
   companyId: string | null;
-  completed: Set<OnboardingStep>;
+  storyDone: boolean;
+  completed: TourStepId[];
+  /** Skipped or finished; the "Ask Thatha" button brings it back. */
   dismissed: boolean;
-  /** Mark a step done and advance. */
-  complete: (step: OnboardingStep) => void;
-  /** Permanently hide the onboarding for this company. */
-  dismiss: () => void;
-  /** Reset when a new company is created. */
+  /** Voice off. */
+  muted: boolean;
   init: (companyId: string) => void;
-  currentStep: () => OnboardingStep | null;
-  isDone: () => boolean;
+  finishStory: () => void;
+  complete: (step: TourStepId) => void;
+  dismiss: () => void;
+  resume: () => void;
+  setMuted: (muted: boolean) => void;
 }
 
 export const useOnboarding = create<OnboardingState>()(
   persist(
     (set, get) => ({
       companyId: null,
-      completed: new Set(),
+      storyDone: false,
+      completed: [],
       dismissed: false,
-
+      muted: false,
       init(companyId) {
         if (get().companyId === companyId) return;
-        set({ companyId, completed: new Set(), dismissed: false });
+        set({ companyId, storyDone: false, completed: [], dismissed: false });
       },
-
+      finishStory: () => set({ storyDone: true }),
       complete(step) {
-        const next = new Set(get().completed);
-        next.add(step);
-        set({ completed: next });
+        if (!get().completed.includes(step)) set({ completed: [...get().completed, step] });
       },
-
-      dismiss() {
-        set({ dismissed: true });
-      },
-
-      currentStep() {
-        const { completed, dismissed } = get();
-        if (dismissed) return null;
-        return STEPS.find((s) => !completed.has(s)) ?? null;
-      },
-
-      isDone() {
-        return STEPS.every((s) => get().completed.has(s));
-      },
+      dismiss: () => set({ dismissed: true, storyDone: true }),
+      resume: () => set({ dismissed: false, storyDone: true }),
+      setMuted: (muted) => set({ muted }),
     }),
-    {
-      name: 'bh-onboarding',
-      // Serialize Set as array.
-      storage: {
-        getItem: (key) => {
-          const raw = localStorage.getItem(key);
-          if (!raw) return null;
-          const parsed = JSON.parse(raw) as {
-            state: { completed: OnboardingStep[]; companyId: string | null; dismissed: boolean };
-          };
-          return {
-            ...parsed,
-            state: { ...parsed.state, completed: new Set(parsed.state.completed) },
-          };
-        },
-        setItem: (key, value) => {
-          const serializable = {
-            ...value,
-            state: { ...value.state, completed: [...value.state.completed] },
-          };
-          localStorage.setItem(key, JSON.stringify(serializable));
-        },
-        removeItem: (key) => localStorage.removeItem(key),
-      },
-    },
+    { name: 'bh-onboarding-v2' },
   ),
 );
+
+/** First step not yet completed, or null when the tour is finished. */
+export function currentTourStep(completed: TourStepId[]): TourStepId | null {
+  return TOUR_STEPS.find((s) => !completed.includes(s)) ?? null;
+}
+
+/** True while the story or tour owns the guide slot (NextStepCard stays hidden). */
+export function useTourActive(companyId: string): boolean {
+  return useOnboarding((s) => s.companyId !== companyId || !s.dismissed);
+}

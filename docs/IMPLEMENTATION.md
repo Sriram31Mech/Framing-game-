@@ -33,7 +33,10 @@ tests/            Cross-package e2e (Playwright), load tests, cross-cutting inte
 - Time = integer **game day**. 360-day year, 12 × 30-day months. Day 0 = 1 June, Year 1.
   Seasons: Kharif Jun–Oct, Rabi Nov–Feb, Zaid Mar–May.
 - Map = local metres; x east, y south; region spans [-halfSize, halfSize] on both axes. Client maps y → three.js z.
-- Ids: UUIDs for runtime entities; parcels have stable text ids `HV-001`…; markets `hemavati-apmc`, `district-market`.
+- Ids: UUIDs for runtime entities; holdings have stable text ids `TN-<ac>-<nn>` (e.g. `TN-174-03`);
+  segments `tn-ac-174`; markets `mandi-<district>` (Chennai: Koyambedu).
+- World: the real map of Tamil Nadu — see `docs/DATA.md` (32 districts, 234 segments, ~2,000
+  holdings measured in acres, district climate/soils/water, one mandi per district).
 
 ## 3. Simulation model
 
@@ -59,8 +62,9 @@ tests/            Cross-package e2e (Playwright), load tests, cross-cutting inte
 
 ## 4. Economy rules
 
-- New human company: `STARTING_CASH_PAISE` + one reserved starter plot (status `reserved`, granted free)
-  if available; otherwise `NO_STARTER_PLOT_BONUS_PAISE` cash. Starting cash is posted as
+- New human company: `STARTING_CASH_PAISE` + one random reserved starter plot (status `reserved`,
+  granted free); once those run out, a random state holding for sale of at most
+  `STARTER_GRANT_MAX_HA`; only if no such land is left, `NO_STARTER_PLOT_BONUS_PAISE` cash. Starting cash is posted as
   `world_treasury → cash` (equity contribution) so the ledger reconciles from day one.
 - Land: state-owned parcels are `for_sale` at `base_price`. Owners may list (`for_sale` with
   `list_price`), delist, or sell back to the state for `LAND_SELL_TO_STATE_FRACTION` × base price.
@@ -73,12 +77,14 @@ tests/            Cross-package e2e (Playwright), load tests, cross-cutting inte
   (seed + sowing labour [+ fertiliser], machinery multipliers). Irrigation requires water access or a
   pump set. Harvest creates an inventory lot (`expires_day` = day + shelfLife × warehouse multiplier),
   charges harvest labour, moves accumulated cost basis into inventory value.
-- Mandi sale: `quoteMarketSale` + `transportCostPaise` from the company's nearest owned/leased parcel
+- Mandi sale: one statewide (Tamil Nadu) price per crop shared by every mandi (all mandi rows of an
+  item hold the same state; a sale at any mandi moves it, rows locked in market_id order);
+  `quoteMarketSale` + `transportCostPaise` from the company's nearest owned/leased parcel
   (or 5 km if none) to the market; slippage guard `minNetUnitPricePaise`; FIFO consumption of available
   (unreserved) stock, lowest-quality-first for the market; fee is a money sink.
 - P2P listings: seller reserves stock from one lot; buyer pays `unit × qty`; seller receives minus
   `P2P_TRADE_FEE_BPS` (sink); buyer receives a new lot with the same quality/expiry. Unit price must
-  lie in `p2pPriceBand(best current mandi price)`. Cannot buy own listing.
+  lie in `p2pPriceBand(statewide Tamil Nadu price)`. Cannot buy own listing.
 - Contracts (buy-side): buyer escrows `total` (cash → escrow). Any other company accepts with matching
   `version` + `termsHash` (sha256 of canonical terms). Seller delivers before `delivery_by_day` from
   available stock with quality ≥ min: escrow → seller cash (minus fee), buyer gets a lot. Unaccepted at

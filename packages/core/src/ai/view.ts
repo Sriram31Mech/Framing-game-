@@ -14,7 +14,7 @@ import type {
   ParcelEnvironment,
   RegionClimate,
 } from '@bh/domain';
-import { ITEM_IDS } from '@bh/domain';
+import { ITEM_IDS, MIN_LOAN_CAP_PAISE } from '@bh/domain';
 import type { Queryable } from '../db/pool';
 import { notFound } from '../errors';
 import { companyDistanceToMarketKm } from '../world/parcels';
@@ -28,6 +28,9 @@ interface HeldParcelRow {
   plot_status: CropPlotStatus | null;
   state: CropPlotState | null;
 }
+
+/** Maximum holdings for sale an AI company evaluates per day. */
+const AI_LAND_SHORTLIST = 30;
 
 export async function buildAiWorldView(
   db: Queryable,
@@ -70,8 +73,12 @@ export async function buildAiWorldView(
          AND NOT EXISTS (SELECT 1 FROM land_leases l WHERE l.parcel_id = p.id AND l.status = 'active')
          AND NOT EXISTS (SELECT 1 FROM crop_plots cp WHERE cp.parcel_id = p.id
                          AND cp.status IN ('growing', 'ready', 'failed'))
-       ORDER BY p.id`,
-      [regionId, companyId],
+         AND COALESCE(p.list_price_paise, p.base_price_paise) <= $3
+       ORDER BY COALESCE(p.list_price_paise, p.base_price_paise) / p.area_ha, p.id
+       LIMIT ${AI_LAND_SHORTLIST}`,
+      // Bounded rationality (and bounded cost): an AI only weighs a shortlist of the best-value
+      // holdings it could plausibly afford, not every one of ~2,000 holdings in the state.
+      [regionId, companyId, Math.max(0, company.cash_paise) + MIN_LOAN_CAP_PAISE],
     ),
     db.query<{ item_id: ItemId; available_kg: number; quality: number; expires_day: number }>(
       `SELECT item_id, SUM(quantity_kg - reserved_kg)::bigint AS available_kg,

@@ -25,6 +25,7 @@ import {
   type CropDefinition,
   type CropId,
   type CropPlotState,
+  climateForEnv,
 } from '@bh/domain';
 import type { Queryable } from '../db/pool';
 import { getRegion } from '../world/region';
@@ -156,10 +157,15 @@ export async function plant(ctx: CommandContext, cmd: Cmd<'plant'>) {
   }
 
   const region = await getRegion(ctx.client, ctx.regionId);
-  const suitability = computeSuitability(crop, parcel.env, region.climate, {
-    sowingDay: ctx.day,
-    irrigated: cmd.irrigate,
-  });
+  const suitability = computeSuitability(
+    crop,
+    parcel.env,
+    climateForEnv(parcel.env, region.climate),
+    {
+      sowingDay: ctx.day,
+      irrigated: cmd.irrigate,
+    },
+  );
   const state = createPlotState({
     cropId: crop.id,
     sownDay: ctx.day,

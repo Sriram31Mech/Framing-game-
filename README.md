@@ -1,7 +1,6 @@
 # Bharat Harvest
 
-A persistent, multiplayer agricultural business simulation set in a fictional Indian Tier 3/Tier 4
-region (the Hemavati Valley). Players start with a small budget and a starter plot, inspect land
+A persistent, multiplayer agricultural business simulation set on the real map of Tamil Nadu (32 districts, 234 areas, district soils, rainfall and seasons; see `docs/DATA.md`). Players start with a small budget and a starter plot, inspect land
 suitability, buy or lease parcels, grow and harvest crops, sell at the mandi or to other players,
 take loans and grow a company — alongside rule-based AI companies in one shared economy. The world
 keeps advancing while players are offline.
@@ -127,31 +126,32 @@ assets              Art sources and licence/provenance records
 All configuration is environment variables, validated at start-up by
 [`packages/core/src/config.ts`](packages/core/src/config.ts). Unsafe production settings fail fast.
 
-| Variable                     | Default                 | Meaning                                                                                          |
-| ---------------------------- | ----------------------- | ------------------------------------------------------------------------------------------------ |
-| `APP_ENV`                    | `development`           | `development` \| `test` \| `staging` \| `production`                                             |
-| `LOG_LEVEL`                  | `info`                  | pino level (`fatal` … `trace`, `silent`)                                                         |
-| `PORT`                       | `8080`                  | API server port                                                                                  |
-| `HOST`                       | `0.0.0.0`               | API bind address                                                                                 |
-| `PUBLIC_CLIENT_URL`          | `http://localhost:5173` | Allowed CORS origin / public URL of the client                                                   |
-| `DATABASE_URL`               | — (required)            | `postgres://user:pass@host:port/db`                                                              |
-| `DATABASE_POOL_MAX`          | `20`                    | Max pooled connections per process                                                               |
-| `SESSION_SECRET`             | — (required)            | HMAC key for session tokens. ≥ 32 chars and not a placeholder in staging/production              |
-| `SESSION_TTL_HOURS`          | `720`                   | Session lifetime                                                                                 |
-| `ENABLE_DEV_AUTH`            | `false`                 | Username-only login. **Refused when `APP_ENV=production`**                                       |
-| `ENABLE_DEV_ADMIN`           | `false`                 | Dev endpoints (time fast-forward). **Refused when `APP_ENV=production`**                         |
-| `ENABLE_PASSWORD_AUTH`       | `true`                  | Username + password accounts                                                                     |
-| `STEAM_APP_ID`               | empty                   | Steam App ID; Steam login is enabled only when this and the key are set                          |
-| `STEAM_WEB_API_KEY`          | empty                   | Steam Web API publisher key (server-side ticket validation). Secret                              |
-| `REGION_ID`                  | `hemavati`              | Region simulated by this deployment                                                              |
-| `REAL_SECONDS_PER_GAME_DAY`  | `120`                   | Wall-clock seconds per game day                                                                  |
-| `WORKER_POLL_MS`             | `2000`                  | Worker clock poll interval                                                                       |
-| `MAX_CATCHUP_DAYS_PER_BATCH` | `30`                    | Days processed per catch-up batch after downtime                                                 |
-| `AI_COMPANY_COUNT`           | `3`                     | Rule-based AI companies to bootstrap                                                             |
-| `SERVE_CLIENT_DIR`           | empty                   | If set, the server serves the built client from this directory (production image: `/app/client`) |
-| `TRUST_PROXY`                | `false`                 | Trust `X-Forwarded-*` from the reverse proxy (set `true` behind Caddy)                           |
-| `MIGRATIONS_DIR`             | `infra/migrations`      | SQL migrations directory (production image: `/app/migrations`)                                   |
-| `TEST_DATABASE_URL`          | local `_test` DB        | Integration-test database (must contain `_test`)                                                 |
+| Variable                                                                                 | Default                 | Meaning                                                                                          |
+| ---------------------------------------------------------------------------------------- | ----------------------- | ------------------------------------------------------------------------------------------------ |
+| `APP_ENV`                                                                                | `development`           | `development` \| `test` \| `staging` \| `production`                                             |
+| `LOG_LEVEL`                                                                              | `info`                  | pino level (`fatal` … `trace`, `silent`)                                                         |
+| `PORT`                                                                                   | `8080`                  | API server port                                                                                  |
+| `HOST`                                                                                   | `0.0.0.0`               | API bind address                                                                                 |
+| `PUBLIC_CLIENT_URL`                                                                      | `http://localhost:5173` | Allowed CORS origin / public URL of the client                                                   |
+| `DATABASE_URL`                                                                           | — (required)            | `postgres://user:pass@host:port/db`                                                              |
+| `DATABASE_POOL_MAX`                                                                      | `20`                    | Max pooled connections per process                                                               |
+| `SESSION_SECRET`                                                                         | — (required)            | HMAC key for session tokens. ≥ 32 chars and not a placeholder in staging/production              |
+| `SESSION_TTL_HOURS`                                                                      | `720`                   | Session lifetime                                                                                 |
+| `ENABLE_DEV_AUTH`                                                                        | `false`                 | Username-only login. **Refused when `APP_ENV=production`**                                       |
+| `ENABLE_DEV_ADMIN`                                                                       | `false`                 | Dev endpoints (time fast-forward). **Refused when `APP_ENV=production`**                         |
+| `ENABLE_PASSWORD_AUTH`                                                                   | `true`                  | Username + password accounts                                                                     |
+| `STEAM_APP_ID`                                                                           | empty                   | Steam App ID; Steam login is enabled only when this and the key are set                          |
+| `STEAM_WEB_API_KEY`                                                                      | empty                   | Steam Web API publisher key (server-side ticket validation). Secret                              |
+| `RATE_LIMIT_AUTH_PER_MIN` / `RATE_LIMIT_COMMANDS_PER_MIN` / `RATE_LIMIT_QUERIES_PER_MIN` | `10` / `120` / `600`    | Per-minute limits (auth per IP; commands/queries per session)                                    |
+| `REGION_ID`                                                                              | `tamil-nadu`            | Region simulated by this deployment                                                              |
+| `REAL_SECONDS_PER_GAME_DAY`                                                              | `120`                   | Wall-clock seconds per game day                                                                  |
+| `WORKER_POLL_MS`                                                                         | `2000`                  | Worker clock poll interval                                                                       |
+| `MAX_CATCHUP_DAYS_PER_BATCH`                                                             | `30`                    | Days processed per catch-up batch after downtime                                                 |
+| `AI_COMPANY_COUNT`                                                                       | `3`                     | Rule-based AI companies to bootstrap                                                             |
+| `SERVE_CLIENT_DIR`                                                                       | empty                   | If set, the server serves the built client from this directory (production image: `/app/client`) |
+| `TRUST_PROXY`                                                                            | `false`                 | Trust `X-Forwarded-*` from the reverse proxy (set `true` behind Caddy)                           |
+| `MIGRATIONS_DIR`                                                                         | `infra/migrations`      | SQL migrations directory (production image: `/app/migrations`)                                   |
+| `TEST_DATABASE_URL`                                                                      | local `_test` DB        | Integration-test database (must contain `_test`)                                                 |
 
 Backup variables (`BACKUP_DIR`, `BACKUP_RETENTION_DAYS`, `BACKUP_MIN_KEEP`, `BACKUP_AT`,
 `BACKUP_UPLOAD_CMD`, `RESTORE_DRILL_WEEKDAY`) are documented in [`scripts/backup.sh`](scripts/backup.sh)
@@ -196,3 +196,5 @@ Full procedures (deploy, rollback, migrations, backups, monitoring, incidents) a
 All rights reserved unless a licence file states otherwise. Third-party assets and data are tracked
 in [`assets/licenses/README.md`](assets/licenses/README.md); inspiration titles named in the design
 documents grant no rights to their code, art or branding.
+
+Map boundaries © DataMeet contributors, CC BY 2.5 India.

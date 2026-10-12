@@ -11,7 +11,7 @@ import {
   p2pPriceBand,
   type ItemId,
 } from '@bh/domain';
-import { bestMandiPricePaise } from '../world/region';
+import { statewidePricePaise } from '../world/region';
 import {
   conflict,
   DomainError,
@@ -40,19 +40,19 @@ type Cmd<T extends GameCommand['type']> = Extract<GameCommand, { type: T }>;
 /** Anti-spam cap on simultaneously open listings per company. */
 export const MAX_OPEN_LISTINGS_PER_COMPANY = 20;
 
-/** Throws RULE_VIOLATION unless the unit price lies in the P2P band around the best mandi price. */
+/** Throws RULE_VIOLATION unless the unit price lies in the P2P band around the statewide price. */
 export async function assertP2pPrice(
   ctx: CommandContext,
   itemId: ItemId,
   unitPricePaise: number,
 ): Promise<void> {
-  const best = await bestMandiPricePaise(ctx.client, ctx.regionId, itemId);
+  const best = await statewidePricePaise(ctx.client, ctx.regionId, itemId);
   const [floor, ceiling] = p2pPriceBand(best);
   if (unitPricePaise < floor || unitPricePaise > ceiling) {
     throw ruleViolation('Price is outside the allowed range for this item', {
       minUnitPricePaise: floor,
       maxUnitPricePaise: ceiling,
-      bestMandiPricePaise: best,
+      statewidePricePaise: best,
     });
   }
 }

@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 import {
   CROPS,
   CROP_IDS,
-  HEMAVATI_CLIMATE,
   ITEM_IDS,
   LAND_TAX_PAISE_PER_HA_PER_MONTH,
   STARTING_CASH_PAISE,
@@ -11,6 +10,7 @@ import {
   generateRegion,
   harvestCostPaise,
   initialMarketItemState,
+  statewideDemandScale,
   isSowingOpen,
   landTaxPaise,
   monthOfDay,
@@ -25,7 +25,7 @@ import {
   type CropId,
   type ItemId,
 } from '../src';
-import { ENVS, simulateSeason } from './helpers';
+import { ENVS, HEMAVATI_CLIMATE, simulateSeason } from './helpers';
 
 const region = generateRegion();
 const PERSONALITIES: AiPersonality[] = ['cautious', 'expansionist', 'trader'];
@@ -268,7 +268,16 @@ describe('decideAiActions', () => {
     expect(decideAiActions(rich, rngFor('land'), 4).some((i) => i.kind === 'buy_parcel')).toBe(
       true,
     );
-    const tight = makeView({ personality: 'expansionist', cashPaise: 150_000_00, day: 100 });
+    const cheapest = [...region.parcels]
+      .sort((a, b) => a.basePricePaise - b.basePricePaise)
+      .slice(0, 30)
+      .map((p) => ({ parcelId: p.id, env: p.env, pricePaise: p.basePricePaise, version: 1 }));
+    const tight = makeView({
+      personality: 'expansionist',
+      cashPaise: 150_000_00,
+      day: 100,
+      parcelsForSale: cheapest,
+    });
     const tightIntents = decideAiActions(tight, rngFor('land'), 4);
     expect(tightIntents.some((i) => i.kind === 'take_loan')).toBe(true);
     const cautious = makeView({ personality: 'cautious', cashPaise: 300_000_00, day: 100 });
@@ -313,7 +322,7 @@ function seasonProfit(input: {
   while (remaining > 0) {
     const lot = Math.min(remaining, Math.round(crop.baseDemandKgPerDay / 2));
     const state = {
-      ...initialMarketItemState(market, crop, 0),
+      ...initialMarketItemState(crop, 0, statewideDemandScale(region.markets)),
       pricePaisePerKg: crop.basePricePaisePerKg,
     };
     revenue += quoteMarketSale(state, market, lot, harvest.quality).netPaise;

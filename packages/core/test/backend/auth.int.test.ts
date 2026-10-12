@@ -52,7 +52,7 @@ describe('register / login / logout', () => {
     expect(auth).toMatchObject({
       accountId: reg.account.id,
       companyId: null,
-      regionId: 'hemavati',
+      regionId: 'tamil-nadu',
     });
 
     expect(await revokeSession(deps.pool, deps.config, session.token)).toBe(true);

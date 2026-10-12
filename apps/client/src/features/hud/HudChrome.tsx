@@ -4,23 +4,30 @@ import { useIsStale } from '../../store/connection';
 import { useSettingsStore } from '../../store/settings';
 import { useUiStore, type PanelId } from '../../store/ui';
 import { Icon, type IconName } from '../../ui/Icon';
-import { perfStats } from '../../world/cameraState';
+import { perfStats } from '../../world/tn/perf';
 
 const NAV: { id: PanelId; label: string; icon: IconName }[] = [
-  { id: 'map', label: 'Map', icon: 'map' },
-  { id: 'farm', label: 'Farm', icon: 'farm' },
-  { id: 'inventory', label: 'Stock', icon: 'inventory' },
-  { id: 'market', label: 'Market', icon: 'market' },
+  { id: 'map', label: 'Find land', icon: 'map' },
+  { id: 'farm', label: 'My farms', icon: 'farm' },
+  { id: 'inventory', label: 'Storage', icon: 'inventory' },
+  { id: 'market', label: 'Sell', icon: 'market' },
+  { id: 'finance', label: 'Money', icon: 'finance' },
   { id: 'contracts', label: 'Deals', icon: 'contracts' },
-  { id: 'finance', label: 'Finance', icon: 'finance' },
   { id: 'leaderboard', label: 'Ranks', icon: 'leaderboard' },
   { id: 'notifications', label: 'Inbox', icon: 'bell' },
   { id: 'settings', label: 'Settings', icon: 'settings' },
 ];
 
+/** Index of the first secondary item (after the separator). */
+const SECONDARY_FROM = 5;
+
 const FULL_NAMES: Partial<Record<PanelId, string>> = {
-  inventory: 'Inventory',
-  contracts: 'Contracts',
+  map: 'Find land in Tamil Nadu',
+  farm: 'My farms and crops',
+  inventory: 'Storage (harvested produce)',
+  market: 'Sell at mandis and trade',
+  finance: 'Money: cash, loans, machinery',
+  contracts: 'Contracts with other players',
   leaderboard: 'Leaderboard',
   notifications: 'Notifications',
 };
@@ -34,7 +41,7 @@ export function Dock() {
     <nav className="bh-dock bh-glass" aria-label="Game sections">
       {NAV.map((n, i) => (
         <span key={n.id} style={{ display: 'contents' }}>
-          {i === 6 ? <span className="sep" aria-hidden="true" /> : null}
+          {i === SECONDARY_FROM ? <span className="sep" aria-hidden="true" /> : null}
           <button
             type="button"
             aria-pressed={panel === n.id}
@@ -72,43 +79,6 @@ export function StaleBanner() {
   );
 }
 
-export function Legend() {
-  return (
-    <div className="bh-legend bh-glass" aria-label="Map legend">
-      <span>
-        <span className="sw" style={{ color: '#ffad33' }} />
-        Yours
-      </span>
-      <span>
-        <span className="sw" style={{ color: '#f3eee2', borderStyle: 'dashed' }} />
-        For sale
-      </span>
-      <span>
-        <span className="sw" style={{ color: '#6f8fe0' }} />
-        AI company
-      </span>
-      <span>
-        <span className="sw" style={{ color: '#b3a68f' }} />
-        Other owners
-      </span>
-    </div>
-  );
-}
-
-export function Hints() {
-  return (
-    <div className="bh-hints bh-glass" aria-hidden="true">
-      <kbd>W</kbd>
-      <kbd>A</kbd>
-      <kbd>S</kbd>
-      <kbd>D</kbd> pan · <kbd>Q</kbd>
-      <kbd>E</kbd> rotate · <kbd>+</kbd>
-      <kbd>−</kbd> zoom · right-drag orbit · double-click focus · <kbd>Esc</kbd> close
-    </div>
-  );
-}
-
-/** Dev perf overlay (fps, draw calls, triangles) — reads mutable stats twice a second. */
 export function PerfOverlay() {
   const show = useSettingsStore((s) => s.showPerf);
   const ref = useRef<HTMLDivElement>(null);
@@ -120,7 +90,7 @@ export function PerfOverlay() {
       ref.current.textContent =
         `${s.fps.toFixed(0).padStart(3)} fps  ${s.frameMs.toFixed(1)} ms\n` +
         `${s.calls} draw calls\n${(s.triangles / 1000).toFixed(0)}k triangles\n` +
-        `${s.instances.toLocaleString('en-IN')} crop instances\n${s.geometries} geometries · layout ${s.layoutMs.toFixed(0)} ms`;
+        `${s.geometries} geometries · ${s.textures} textures`;
     }, 500);
     return () => clearInterval(id);
   }, [show]);

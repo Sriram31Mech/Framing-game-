@@ -23,6 +23,7 @@ import {
   PlotsResponse,
   PriceHistoryResponse,
   RegionMapResponse,
+  SegmentDetailResponse,
   SaleQuoteResponse,
   WorldResponse,
   type AcceptContractRequest,
@@ -119,6 +120,7 @@ export function createApi(http: HttpClient) {
     me: () => get('/me', MeResponse),
     world: () => get('/world', WorldResponse),
     regionMap: (regionId: string) => get(`/regions/${enc(regionId)}/map`, RegionMapResponse),
+    segment: (segmentId: string) => get(`/segments/${enc(segmentId)}`, SegmentDetailResponse),
     parcel: (parcelId: string) => get(`/parcels/${enc(parcelId)}`, ParcelDetailResponse),
     parcelSuitability: (parcelId: string) =>
       get(`/parcels/${enc(parcelId)}/suitability`, ParcelSuitabilityResponse),

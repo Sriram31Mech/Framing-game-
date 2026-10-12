@@ -4,6 +4,7 @@
  */
 import {
   NO_STARTER_PLOT_BONUS_PAISE,
+  STARTER_GRANT_MAX_HA,
   AI_STARTING_CASH_PAISE,
   STARTING_CASH_PAISE,
   formatInr,
@@ -44,7 +45,8 @@ export async function createCompany(
 /**
  * Create a company inside the caller's transaction:
  * one company per account; region capacity for humans; unique name (case-insensitive);
- * starting cash (world_treasury → cash); a reserved starter plot if one is left, otherwise
+ * starting cash (world_treasury → cash); a random reserved starter plot if one is left, else a
+ * random small state holding for sale (every player starts with land), else
  * NO_STARTER_PLOT_BONUS_PAISE extra cash; a welcome notification.
  *
  * Retrying with the same account and the same name returns the existing company (idempotent).
@@ -130,13 +132,18 @@ export async function createCompanyInTx(
     ],
   });
 
-  // Grant a reserved starter plot. SKIP LOCKED lets concurrent foundings in other regions
-  // (or a future relaxed region lock) pick different plots without waiting.
+  // Grant a random reserved starter plot; once those run out, a random small state holding that
+  // is for sale (both only exist in farming segments, never urban Chennai). Ordering by a hash
+  // salted with the new company id spreads players across Tamil Nadu while staying reproducible
+  // for a given company (no Math.random / random() in the tx). SKIP LOCKED lets concurrent
+  // foundings pick different plots without waiting.
   const plot = await client.query<{ id: string; area_ha: number }>(
     `SELECT id, area_ha FROM land_parcels
-     WHERE region_id = $1 AND status = 'reserved' AND is_starter_plot AND owner_company_id IS NULL
-     ORDER BY id LIMIT 1 FOR UPDATE SKIP LOCKED`,
-    [input.regionId],
+     WHERE region_id = $1 AND owner_company_id IS NULL
+       AND ((status = 'reserved' AND is_starter_plot) OR (status = 'for_sale' AND area_ha <= $3))
+     ORDER BY (status = 'reserved') DESC, md5(id || $2::text), id
+     LIMIT 1 FOR UPDATE SKIP LOCKED`,
+    [input.regionId, companyId, STARTER_GRANT_MAX_HA],
   );
   const starter = plot.rows[0];
   let starterParcelId: string | null = null;
@@ -188,10 +195,10 @@ export async function createCompanyInTx(
     companyId,
     type: 'welcome',
     severity: 'success',
-    title: `Welcome to the valley, ${name}!`,
+    title: `Vanakkam, ${name}! Welcome to Tamil Nadu`,
     body: starterParcelId
       ? `You start with ${formatInr(STARTING_CASH_PAISE, { compact: true })} and starter plot ${starterParcelId}. Check its crop suitability and plant when the sowing window opens.`
-      : `You start with ${formatInr(STARTING_CASH_PAISE + NO_STARTER_PLOT_BONUS_PAISE, { compact: true })} (no starter plots were left, so you received extra cash). Buy or lease land to begin farming.`,
+      : `You start with ${formatInr(STARTING_CASH_PAISE + NO_STARTER_PLOT_BONUS_PAISE, { compact: true })} (no land was left to grant, so you received extra cash). Buy or lease land to begin farming.`,
     gameDay: day,
     entityType: 'company',
     entityId: companyId,

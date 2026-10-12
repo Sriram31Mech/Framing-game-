@@ -22,7 +22,7 @@ export function Panel({
 }) {
   return (
     <section
-      className={`bh-panel bh-glass${size === 'lg' ? ' lg' : ''}`}
+      className={`bh-panel bh-glass bh-scroll${size === 'lg' ? ' lg' : ''}`}
       aria-label={typeof title === 'string' ? title : undefined}
       data-testid={testId}
     >

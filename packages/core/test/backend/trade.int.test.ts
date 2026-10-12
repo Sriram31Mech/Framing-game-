@@ -2,7 +2,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { applyBps, P2P_TRADE_FEE_BPS, p2pPriceBand } from '@bh/domain';
 import type { CoreDeps } from '../../src/commands/types';
 import { getContracts, getListings } from '../../src/queries/markets';
-import { bestMandiPricePaise } from '../../src/world/region';
+import { statewidePricePaise } from '../../src/world/region';
 import {
   cashOf,
   expectError,
@@ -27,7 +27,7 @@ beforeAll(async () => {
   seller = await newPlayer(deps, 'Seller Co');
   buyer = await newPlayer(deps, 'Buyer Co');
   buyer2 = await newPlayer(deps, 'Second Buyer');
-  price = await bestMandiPricePaise(deps.pool, REGION, 'ragi');
+  price = await statewidePricePaise(deps.pool, REGION, 'ragi');
 });
 afterAll(async () => {
   await deps.pool.end();

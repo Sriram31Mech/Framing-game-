@@ -8,6 +8,7 @@ import {
   DEFAULT_REGION_SEED,
   getCrop,
   initialMarketItemState,
+  statewideDemandScale,
   generateRegion,
   RULESET_VERSION,
   type AiPersonality,
@@ -25,16 +26,16 @@ const BOOTSTRAP_LOCK_KEY = 72_210_002;
 
 const AI_PERSONALITY_CYCLE: AiPersonality[] = ['cautious', 'expansionist', 'trader'];
 const AI_COMPANY_NAMES = [
-  'Kaveri Agro Ventures',
-  'Malnad Green Farms',
-  'Hemavati Traders',
-  'Deccan Harvest Co',
-  'Sahyadri Produce',
-  'Belur Agri Holdings',
-  'Yagachi Valley Foods',
-  'Channapatna Growers',
-  'Shettihalli Estates',
-  'Gorur Agro Collective',
+  'Kaveri Delta Agro',
+  'Kongu Green Farms',
+  'Chola Traders',
+  'Pandya Harvest Co',
+  'Nilgiri Produce',
+  'Thanjai Agri Holdings',
+  'Vaigai Valley Foods',
+  'Palar Growers',
+  'Thamirabarani Estates',
+  'Coromandel Agro Collective',
 ];
 
 export interface BootstrapOptions {
@@ -100,6 +101,8 @@ async function insertRegion(
     roads: region.roads,
     river: region.river,
     features: region.features,
+    districts: region.districts ?? [],
+    segments: region.segments ?? [],
   };
   await client.query(
     `INSERT INTO regions (id, name, seed, half_size_m, origin_lat, origin_lon, climate, map_features)
@@ -116,13 +119,17 @@ async function insertRegion(
     ],
   );
 
+  // One statewide price per item; every mandi row of an item holds the same state.
+  const statewide = CROP_IDS.map((itemId) =>
+    initialMarketItemState(getCrop(itemId), 0, statewideDemandScale(region.markets)),
+  );
   for (const market of region.markets) {
     await client.query(
       'INSERT INTO markets (id, region_id, name, definition) VALUES ($1, $2, $3, $4)',
       [market.id, region.id, market.name, JSON.stringify(market)],
     );
-    for (const itemId of CROP_IDS) {
-      const state = initialMarketItemState(market, getCrop(itemId), 0);
+    for (const state of statewide) {
+      const itemId = state.itemId;
       await client.query(
         `INSERT INTO market_item_states (market_id, item_id, price_paise_per_kg, supply_pressure_kg, demand_kg_per_day, updated_day)
          VALUES ($1, $2, $3, $4, $5, 0)`,

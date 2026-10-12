@@ -4,7 +4,6 @@ import {
   CROP_STAGES,
   CROPS,
   DRAINAGE_CLASSES,
-  HEMAVATI_CLIMATE,
   SUITABILITY_FACTOR_KEYS,
   computeAllSuitability,
   computeSuitability,
@@ -18,7 +17,7 @@ import {
   type ParcelEnvironment,
   type Range4,
 } from '../src';
-import { ENVS } from './helpers';
+import { ENVS, HEMAVATI_CLIMATE } from './helpers';
 
 function expectOrdered(range: Range4) {
   expect(range.min).toBeLessThanOrEqual(range.optMin);
@@ -63,7 +62,8 @@ describe('crop data', () => {
     expect(cropDurationDays(CROPS.tomato)).toBeLessThanOrEqual(105);
     expect(CROPS.tomato.shelfLifeDays).toBe(12);
     expect(isSowingOpen(CROPS.rice, 7)).toBe(true);
-    expect(isSowingOpen(CROPS.rice, 12)).toBe(false);
+    expect(isSowingOpen(CROPS.rice, 12)).toBe(true); // Navarai
+    expect(isSowingOpen(CROPS.rice, 11)).toBe(false);
     expect(isSowingOpen(CROPS.chickpea, 11)).toBe(true);
     expect(isSowingOpen(CROPS.tomato, 7)).toBe(false);
     expect(isSowingOpen(CROPS.maize, 6) && isSowingOpen(CROPS.maize, 11)).toBe(true);
@@ -219,11 +219,12 @@ describe('suitability', () => {
 
   it('reports sowing windows from the sowing day', () => {
     const december = 190; // 11 Dec, Year 1
+    const november = 160; // 11 Nov, Year 1
     const result = computeSuitability(CROPS.rice, ENVS.riverClay, HEMAVATI_CLIMATE, {
-      sowingDay: december,
+      sowingDay: november,
     });
     expect(result.sowingOpen).toBe(false);
-    expect(result.nextSowingMonth).toBe(6);
+    expect(result.nextSowingMonth).toBe(12);
     const chickpea = computeSuitability(CROPS.chickpea, ENVS.riverClay, HEMAVATI_CLIMATE, {
       sowingDay: december,
     });

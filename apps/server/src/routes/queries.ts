@@ -28,6 +28,7 @@ import {
   getParcelSuitability,
   getPriceHistory,
   getRegionMap,
+  getSegmentDetail,
   getSaleQuote,
   getWorld,
 } from '@bh/core';
@@ -37,6 +38,7 @@ import { getAuth, groupRateLimit, parseInput, rateLimitKey, requireAuth } from '
 import type { RouteEnv } from './env';
 
 const ParcelParams = z.object({ parcelId: z.string().min(1).max(32) });
+const SegmentParams = z.object({ segmentId: z.string().regex(/^tn-ac-\d{3}$/) });
 const CompanyParams = z.object({ companyId: z.uuid() });
 const MarketParams = z.object({ marketId: z.string().min(1).max(64) });
 const RegionParams = z.object({ regionId: z.string().min(1).max(64) });
@@ -57,7 +59,11 @@ export function registerQueryRoutes(app: FastifyInstance, env: RouteEnv): void {
   app.get('/api/v1/world', opts, async (req) => getWorld(deps, getAuth(req)));
   app.get('/api/v1/regions/:regionId/map', opts, async (req) => {
     const { regionId } = parseInput(RegionParams, req.params, 'params');
-    return getRegionMap(deps, regionId);
+    return getRegionMap(deps, regionId, getAuth(req).companyId);
+  });
+  app.get('/api/v1/segments/:segmentId', opts, async (req) => {
+    const { segmentId } = parseInput(SegmentParams, req.params, 'params');
+    return getSegmentDetail(deps, getAuth(req), segmentId);
   });
   app.get('/api/v1/parcels/:parcelId', opts, async (req) => {
     const { parcelId } = parseInput(ParcelParams, req.params, 'params');

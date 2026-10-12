@@ -1,5 +1,11 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { ApiError, AuthResponse, MeResponse, RegionMapResponse } from '@bh/contracts';
+import {
+  ApiError,
+  AuthResponse,
+  MeResponse,
+  RegionMapResponse,
+  SegmentDetailResponse,
+} from '@bh/contracts';
 import { bootstrapWorld, findLedgerMismatches, type CoreDeps } from '@bh/core';
 import type { FastifyInstance } from 'fastify';
 import { createTestDeps, testConfig } from '../../../packages/core/test/helpers/db';
@@ -41,7 +47,7 @@ describe('ops endpoints', () => {
     const notReady = await app.inject('/readyz');
     expect(notReady.statusCode).toBe(503);
     expect(ApiError.parse(notReady.json()).error.code).toBe('SERVICE_UNAVAILABLE');
-    await bootstrapWorld(deps, { regionId: 'hemavati' });
+    await bootstrapWorld(deps, { regionId: 'tamil-nadu' });
     const ready = await app.inject('/readyz');
     expect(ready.statusCode).toBe(200);
     expect(ready.json()).toMatchObject({ status: 'ready', gameDay: 0 });
@@ -110,7 +116,7 @@ describe('auth over HTTP', () => {
     expect(reg.statusCode).toBe(201);
     const { token } = AuthResponse.parse(reg.json());
     const me = await app.inject({ url: '/api/v1/me', headers: bearer(token) });
-    expect(MeResponse.parse(me.json())).toMatchObject({ company: null, regionId: 'hemavati' });
+    expect(MeResponse.parse(me.json())).toMatchObject({ company: null, regionId: 'tamil-nadu' });
 
     const bad = await app.inject({
       method: 'POST',
@@ -237,7 +243,7 @@ describe('commands over HTTP', () => {
   it('validates params and bodies with issue details', async () => {
     const badBody = await app.inject({
       method: 'POST',
-      url: '/api/v1/parcels/HV-001/purchase',
+      url: '/api/v1/parcels/TN-001-02/purchase',
       headers: { ...bearer(tokenA), 'idempotency-key': key() },
       payload: { expectedVersion: 'one', expectedPricePaise: -5 },
     });
@@ -272,14 +278,20 @@ describe('commands over HTTP', () => {
 
   it('runs a purchase once per key, replays it, and rejects key reuse with a different body', async () => {
     const map = RegionMapResponse.parse(
-      (await app.inject({ url: '/api/v1/regions/hemavati/map', headers: bearer(tokenA) })).json(),
+      (await app.inject({ url: '/api/v1/regions/tamil-nadu/map', headers: bearer(tokenA) })).json(),
     );
-    const parcel = map.parcels
+    expect(map.districts).toHaveLength(32);
+    const segmentId = map.segments.find((s) => s.holdingsForSale > 0)!.id;
+    const segment = SegmentDetailResponse.parse(
+      (await app.inject({ url: `/api/v1/segments/${segmentId}`, headers: bearer(tokenA) })).json(),
+    );
+    expect(segment.district.monthlyRainMm).toHaveLength(12);
+    const parcel = segment.holdings
       .filter((p) => p.status === 'for_sale' && p.ownerCompanyId === null)
       .sort((x, y) => (x.listPricePaise ?? 0) - (y.listPricePaise ?? 0))[0]!;
     // Fund Alice enough (ledger-consistent grant) to buy land.
     await deps.pool.query(
-      `WITH t AS (INSERT INTO ledger_transactions (region_id, kind, description, game_day) VALUES ('hemavati','test','grant',0) RETURNING id)
+      `WITH t AS (INSERT INTO ledger_transactions (region_id, kind, description, game_day) VALUES ('tamil-nadu','test','grant',0) RETURNING id)
        INSERT INTO ledger_entries (transaction_id, company_id, account_code, amount_paise, game_day)
        SELECT t.id, x.c, x.a, x.v, 0 FROM t, (VALUES ($1::uuid, 'cash', 100000000::bigint), (NULL::uuid, 'world_treasury', -100000000::bigint)) AS x(c, a, v)`,
       [companyA],

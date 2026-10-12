@@ -149,6 +149,7 @@ jobs:
       PUBLIC_CLIENT_URL: http://localhost:8080
       SERVE_CLIENT_DIR: ${{ github.workspace }}/apps/client/dist
       E2E_BASE_URL: http://localhost:8080
+      E2E_API_URL: http://localhost:8080
     steps:
       - uses: actions/checkout@v5
       # hashFiles() is not available in job-level `if`, so detect specs in a step.

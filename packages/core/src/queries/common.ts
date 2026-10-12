@@ -153,6 +153,8 @@ export function toParcelSummary(r: ParcelSummaryDbRow): ParcelSummaryDto {
     operatorCompanyId: r.lessee_company_id ?? r.owner_company_id,
     listPricePaise: r.status === 'for_sale' ? r.list_price_paise : null,
     isStarterPlot: r.is_starter_plot,
+    segmentId: r.env.segmentId ?? null,
+    districtId: r.env.districtId ?? null,
     soilTexture: r.env.soilTexture,
     waterAccess: r.env.waterAccess,
     elevationM: r.env.elevationM,

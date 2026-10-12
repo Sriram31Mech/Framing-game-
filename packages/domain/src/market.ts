@@ -23,6 +23,10 @@ import type {
  * so the average price realised over a sale of Q kg is P0 · ln(1 + x) / x with x = k·Q/D.
  * Sales add to supply pressure, which decays ~15% a day and depresses the mean-reversion
  * target by the same curve, so a dumped harvest depresses prices for about a week.
+ *
+ * Tamil Nadu has ONE statewide price per crop: every mandi quotes the same price and a sale at
+ * any mandi moves it. Mandis differ only as delivery points (distance → transport, fee).
+ * Statewide demand is the sum of every mandi's demand (`statewideDemandScale`).
  */
 
 /** Price sensitivity k: selling one full day of demand at once ends ~26% below the start price. */
@@ -46,14 +50,15 @@ function clampPrice(crop: CropDefinition, price: number): Paise {
   return Math.max(1, roundHalfAwayFromZero(clamped));
 }
 
-/** Seasonal reference price at a market on `day` (base × seasonal factor × market premium). */
-export function seasonalTargetPricePaise(
-  market: MarketDefinition,
-  crop: CropDefinition,
-  day: GameDay,
-): Paise {
+/** Statewide seasonal reference price on `day` (base × seasonal factor). */
+export function seasonalTargetPricePaise(crop: CropDefinition, day: GameDay): Paise {
   const seasonal = crop.seasonalPriceFactor[monthOfDay(day) - 1] ?? 1;
-  return clampPrice(crop, crop.basePricePaisePerKg * seasonal * market.priceScale);
+  return clampPrice(crop, crop.basePricePaisePerKg * seasonal);
+}
+
+/** Statewide demand multiplier: the sum of every mandi's share of demand. */
+export function statewideDemandScale(markets: readonly MarketDefinition[]): number {
+  return markets.reduce((sum, m) => sum + m.demandScale, 0);
 }
 
 /** Price multiplier for produce quality 0..100. */
@@ -68,39 +73,36 @@ function averageImpactFactor(quantityKg: Kg, demandKgPerDay: Kg): number {
   return x < 1e-9 ? 1 : Math.log1p(x) / x;
 }
 
-/** Initial state for an item at a market at world start. */
+/** Initial statewide state for an item at world start (`demandScale` from `statewideDemandScale`). */
 export function initialMarketItemState(
-  market: MarketDefinition,
   crop: CropDefinition,
   day: GameDay,
+  demandScale: number,
 ): MarketItemState {
   return {
     itemId: crop.id,
-    pricePaisePerKg: seasonalTargetPricePaise(market, crop, day),
+    pricePaisePerKg: seasonalTargetPricePaise(crop, day),
     supplyPressureKg: 0,
-    demandKgPerDay: Math.round(crop.baseDemandKgPerDay * market.demandScale),
+    demandKgPerDay: Math.round(crop.baseDemandKgPerDay * demandScale),
   };
 }
 
 /**
- * Daily price update: mean-reverts toward base * seasonal factor * market.priceScale,
- * pushed down by supply pressure relative to demand, small deterministic noise from `random`.
+ * Daily statewide price update: mean-reverts toward base * seasonal factor, pushed down by
+ * supply pressure relative to (statewide) demand, small deterministic noise from `random`.
  * Supply pressure decays (~15%/day). Price is clamped to [0.4, 2.5] x base price.
  */
 export function nextMarketItemState(
   state: MarketItemState,
-  ctx: { market: MarketDefinition; crop: CropDefinition; day: GameDay; random: () => number },
+  ctx: { crop: CropDefinition; day: GameDay; random: () => number },
 ): MarketItemState {
-  const { market, crop, day, random } = ctx;
-  const demandKgPerDay = Math.round(crop.baseDemandKgPerDay * market.demandScale);
+  const { crop, day, random } = ctx;
+  const demandKgPerDay = state.demandKgPerDay;
   const supplyPressureKg = Math.floor(state.supplyPressureKg * SUPPLY_PRESSURE_RETENTION);
   const supplyFactor =
     1 / (1 + (MARKET_IMPACT_COEFFICIENT * supplyPressureKg) / Math.max(1, demandKgPerDay));
   const target =
-    crop.basePricePaisePerKg *
-    (crop.seasonalPriceFactor[monthOfDay(day) - 1] ?? 1) *
-    market.priceScale *
-    supplyFactor;
+    crop.basePricePaisePerKg * (crop.seasonalPriceFactor[monthOfDay(day) - 1] ?? 1) * supplyFactor;
   // Approximately normal noise (Irwin–Hall of three uniforms, unit variance).
   const noise = (random() + random() + random() - 1.5) * 2;
   const volatility = crop.priceVolatility ?? 0.01;
@@ -185,9 +187,9 @@ export function transportCostPaise(
   );
 }
 
-/** Anti-manipulation band for P2P prices. Returns [floor, ceiling] paise/kg. */
-export function p2pPriceBand(bestMandiPricePaisePerKg: Paise): [Paise, Paise] {
-  const reference = Math.max(1, bestMandiPricePaisePerKg);
+/** Anti-manipulation band for P2P prices around the statewide price. Returns [floor, ceiling] paise/kg. */
+export function p2pPriceBand(statewidePricePaisePerKg: Paise): [Paise, Paise] {
+  const reference = Math.max(1, statewidePricePaisePerKg);
   return [
     Math.max(1, Math.floor(reference * P2P_PRICE_FLOOR_MULTIPLIER)),
     Math.ceil(reference * P2P_PRICE_CEILING_MULTIPLIER),

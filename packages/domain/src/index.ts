@@ -21,3 +21,4 @@ export * from './region';
 export * from './terrain';
 export * from './ai';
 export * from './geometry';
+export * from './tamilnadu';

@@ -10,7 +10,7 @@ test.describe('Auth', () => {
   test('dev-login creates a session and shows the game HUD', async ({ page }) => {
     const username = uid('auth');
     await devLogin(page, username);
-    await ensureCompany(page, `Co_${username.slice(-6)}`);
+    await ensureCompany(page, `Co ${username.slice(-4)}`);
     await expect(page.getByTestId('nav-map')).toBeVisible();
     await expect(page.getByTestId('nav-farm')).toBeVisible();
   });
@@ -18,7 +18,7 @@ test.describe('Auth', () => {
   test('session persists across page reload', async ({ page }) => {
     const username = uid('persist');
     await devLogin(page, username);
-    await ensureCompany(page, `Co_${username.slice(-6)}`);
+    await ensureCompany(page, `Co ${username.slice(-4)}`);
 
     // Reload — the token in localStorage should restore the session.
     await page.reload();
@@ -28,7 +28,7 @@ test.describe('Auth', () => {
   test('sign-out returns to the auth screen', async ({ page }) => {
     const username = uid('signout');
     await devLogin(page, username);
-    await ensureCompany(page, `Co_${username.slice(-6)}`);
+    await ensureCompany(page, `Co ${username.slice(-4)}`);
 
     await page.getByTestId('nav-settings').click();
     await expect(page.getByTestId('settings-panel')).toBeVisible();
@@ -38,7 +38,7 @@ test.describe('Auth', () => {
 
   test('second login with same username resumes the same company', async ({ page }) => {
     const username = uid('resume');
-    const coName = `Co_${username.slice(-6)}`;
+    const coName = `Co ${username.slice(-4)}`;
 
     await devLogin(page, username);
     await ensureCompany(page, coName);

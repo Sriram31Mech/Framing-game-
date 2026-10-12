@@ -14,7 +14,7 @@ let n = 0;
 
 beforeAll(async () => {
   deps = await createTestDeps({ aiCompanyCount: 0 });
-  await bootstrapWorld(deps, { regionId: 'hemavati' });
+  await bootstrapWorld(deps, { regionId: 'tamil-nadu' });
   ({ app, gateway } = await buildApp(deps, {
     rateLimits: { auth: 1000 },
     gateway: { authTimeoutMs: 300, maxConnectionsPerAccount: 2 },
@@ -109,12 +109,12 @@ describe('realtime gateway', () => {
     expect(res.statusCode).toBe(200);
     await deps.pool.query(
       `INSERT INTO domain_events (region_id, type, company_id, payload, game_day)
-       VALUES ('hemavati', 'parcel.updated', NULL, '{"parcelId":"HV-001"}', 0),
-              ('hemavati', 'company.updated', $1, '{"cashPaise":1,"status":"active"}', 0)`,
+       VALUES ('tamil-nadu', 'parcel.updated', NULL, '{"parcelId":"TN-001-02"}', 0),
+              ('tamil-nadu', 'company.updated', $1, '{"cashPaise":1,"status":"active"}', 0)`,
       [a.companyId],
     );
     const pub = await sb.waitFor(isEvent('parcel.updated'));
-    expect(pub.event.payload).toEqual({ parcelId: 'HV-001' });
+    expect(pub.event.payload).toEqual({ parcelId: 'TN-001-02' });
     await sa.waitFor(isEvent('parcel.updated'));
     await sa.waitFor(isEvent('company.updated', a.companyId));
     // B never receives A's private events.

@@ -10,14 +10,19 @@ import type {
   PriceHistoryResponse,
   SaleQuoteResponse,
 } from '@bh/contracts';
-import { getCrop, mulPaise, type ItemId } from '@bh/domain';
+import { getCrop, type ItemId } from '@bh/domain';
 import type { AuthContext } from '../auth/sessions';
 import { computeMarketSale } from '../commands/market';
 import type { CoreDeps } from '../commands/types';
 import { computeBalanceSheets } from '../companies/valuation';
 import { insufficientStock } from '../errors';
 import { getCurrentGameDay } from '../world/clock';
-import { getMarket, getMarketItemState, listMarketItemStates, listMarkets } from '../world/region';
+import {
+  getMarket,
+  getStatewideItemState,
+  listMarketItemStates,
+  listMarkets,
+} from '../world/region';
 import { requireCompany } from './common';
 
 /** Percentage change, one decimal. */
@@ -47,13 +52,12 @@ export async function getMarkets(deps: CoreDeps, auth: AuthContext): Promise<Mar
       y: m.y,
       feeBps: m.feeBps,
       demandScale: m.demandScale,
-      priceScale: m.priceScale,
       prices: states
         .filter((s) => s.marketId === m.id)
         .map((s) => ({
           itemId: s.itemId,
           pricePaisePerKg: s.pricePaisePerKg,
-          basePricePaisePerKg: mulPaise(getCrop(s.itemId).basePricePaisePerKg, m.priceScale),
+          basePricePaisePerKg: getCrop(s.itemId).basePricePaisePerKg,
           demandKgPerDay: Math.max(0, Math.round(s.demandKgPerDay)),
           changePct7d: pctChange(
             pastBy.get(`${m.id}/${s.itemId}`) ?? s.pricePaisePerKg,
@@ -102,7 +106,7 @@ export async function getSaleQuote(
   const companyId = requireCompany(auth);
   const day = await getCurrentGameDay(deps.pool, auth.regionId);
   const market = await getMarket(deps.pool, auth.regionId, marketId);
-  const state = await getMarketItemState(deps.pool, marketId, q.itemId);
+  const state = await getStatewideItemState(deps.pool, auth.regionId, q.itemId);
   // Same consumption order as the sale itself: lowest quality first, then oldest.
   const { rows } = await deps.pool.query<{ quality: number; available: number }>(
     `SELECT quality, (quantity_kg - reserved_kg) AS available FROM inventory_lots

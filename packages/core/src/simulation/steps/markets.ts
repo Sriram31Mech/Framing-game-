@@ -3,7 +3,6 @@ import {
   nextMarketItemState,
   rngFor,
   type ItemId,
-  type MarketDefinition,
   type MarketItemState,
 } from '@bh/domain';
 import { tickEvent } from '../effects';
@@ -15,21 +14,20 @@ interface StateRow {
   price_paise_per_kg: number;
   supply_pressure_kg: number;
   demand_kg_per_day: number;
-  definition: MarketDefinition;
   sold_kg: number;
 }
 
 /**
- * Step 5 — daily market update for every market × item: `nextMarketItemState` (mean reversion,
- * supply-pressure decay, seeded noise rngFor(regionSeed, 'market', marketId, itemId, day)),
- * then a snapshot of day D's closing price (after the day's sales moved it) and the volume sold
- * into that market during day D. The updated state is the opening price of day D+1.
+ * Step 5 — daily statewide price update per item: `nextMarketItemState` (mean reversion,
+ * supply-pressure decay, seeded noise rngFor(regionSeed, 'market', itemId, day)) computed once
+ * from the item's first mandi row and written to every mandi row (one Tamil Nadu price).
+ * Then a snapshot per mandi of day D's closing price (after the day's sales moved it) and the
+ * volume sold into that mandi during day D. The updated state is the opening price of day D+1.
  * Emits one public `market.price_updated` per market.
  */
 export async function updateMarkets(ctx: TickContext): Promise<void> {
   const { rows } = await ctx.client.query<StateRow>(
     `SELECT s.market_id, s.item_id, s.price_paise_per_kg, s.supply_pressure_kg, s.demand_kg_per_day,
-            m.definition,
             COALESCE((SELECT SUM(t.quantity_kg) FROM trades t
                       WHERE t.kind = 'market_sale' AND t.market_id = s.market_id
                         AND t.item_id = s.item_id AND t.game_day = $2), 0)::bigint AS sold_kg
@@ -41,25 +39,33 @@ export async function updateMarkets(ctx: TickContext): Promise<void> {
   );
   if (rows.length === 0) return;
 
-  const next: { row: StateRow; state: MarketItemState }[] = rows.map((row) => {
+  const statewide = new Map<ItemId, MarketItemState>();
+  for (const row of rows) {
+    if (statewide.has(row.item_id)) continue;
     const current: MarketItemState = {
       itemId: row.item_id,
       pricePaisePerKg: row.price_paise_per_kg,
       supplyPressureKg: row.supply_pressure_kg,
       demandKgPerDay: row.demand_kg_per_day,
     };
-    const state = nextMarketItemState(current, {
-      market: row.definition,
-      crop: getCrop(row.item_id),
-      day: ctx.day,
-      random: rngFor(ctx.regionSeed, 'market', row.market_id, row.item_id, ctx.day),
-    });
-    return { row, state };
-  });
+    statewide.set(
+      row.item_id,
+      nextMarketItemState(current, {
+        crop: getCrop(row.item_id),
+        day: ctx.day,
+        random: rngFor(ctx.regionSeed, 'market', row.item_id, ctx.day),
+      }),
+    );
+  }
+  const next = rows.map((row) => ({ row, state: statewide.get(row.item_id)! }));
 
   const marketIds = next.map((n) => n.row.market_id);
   const itemIds = next.map((n) => n.row.item_id);
   const prices = next.map((n) => n.state.pricePaisePerKg);
+  // Closing price is the statewide one (first row per item), whatever a stale row held.
+  const closing = new Map<ItemId, number>();
+  for (const row of rows)
+    if (!closing.has(row.item_id)) closing.set(row.item_id, row.price_paise_per_kg);
   await ctx.client.query(
     `UPDATE market_item_states s
      SET price_paise_per_kg = u.price, supply_pressure_kg = u.supply, demand_kg_per_day = u.demand,
@@ -86,7 +92,7 @@ export async function updateMarkets(ctx: TickContext): Promise<void> {
       ctx.day,
       marketIds,
       itemIds,
-      next.map((n) => n.row.price_paise_per_kg),
+      next.map((n) => closing.get(n.row.item_id)!),
       next.map((n) => n.row.sold_kg),
     ],
   );

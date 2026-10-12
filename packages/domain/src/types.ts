@@ -64,6 +64,10 @@ export interface ParcelEnvironment {
   waterAccess: WaterAccess;
   /** Distance to the nearest road, km. */
   roadDistanceKm: number;
+  /** Tamil Nadu district this land lies in; selects the district climate and weather. */
+  districtId?: string;
+  /** Map segment (assembly-constituency area) this land lies in. */
+  segmentId?: string;
 }
 
 /** Monthly climate normals for a region; arrays have 12 entries, index 0 = January. */
@@ -274,10 +278,8 @@ export interface MarketDefinition {
   y: number;
   /** Mandi fee charged on sales to this market, basis points. */
   feeBps: number;
-  /** Multiplier on regional demand this market absorbs. */
+  /** This mandi's share of statewide demand (the price itself is statewide). */
   demandScale: number;
-  /** Price premium multiplier vs the local base (district markets pay more but are further). */
-  priceScale: number;
 }
 
 export interface MarketItemState {
@@ -388,6 +390,31 @@ export interface GeneratedParcel {
   leaseRentPaisePerSeason: Paise;
   /** Small starter plots are reserved for new companies. */
   isStarterPlot: boolean;
+  segmentId?: string;
+  districtId?: string;
+}
+
+/** A real map area (assembly constituency) holding many farm holdings. */
+export interface GeneratedSegment {
+  /** e.g. "tn-ac-174". */
+  id: string;
+  name: string;
+  districtId: string;
+  polygon: MapPoint[];
+  centroid: MapPoint;
+  areaHa: number;
+  /** Approximate cultivable area, ha. */
+  farmlandHa: number;
+}
+
+export interface GeneratedDistrict {
+  id: string;
+  name: string;
+  tamilName: string;
+  zone: string;
+  /** Outer boundary rings, metres. */
+  polygons: MapPoint[][];
+  centroid: MapPoint;
 }
 
 export interface GeneratedRoad {
@@ -421,6 +448,8 @@ export interface GeneratedRegion {
   /** River centreline. */
   river: { points: MapPoint[]; widthM: number };
   features: GeneratedFeature[];
+  districts?: GeneratedDistrict[];
+  segments?: GeneratedSegment[];
 }
 
 // ---------------------------------------------------------------------------

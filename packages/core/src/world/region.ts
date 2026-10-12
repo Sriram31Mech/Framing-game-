@@ -3,7 +3,9 @@
  * Shared by the command layer and queries (backend-owned; see docs/IMPLEMENTATION.md §6).
  */
 import type {
+  GeneratedDistrict,
   GeneratedFeature,
+  GeneratedSegment,
   GeneratedRoad,
   ItemId,
   MapPoint,
@@ -31,6 +33,8 @@ export interface RegionMapFeatures {
   roads: GeneratedRoad[];
   river: { points: MapPoint[]; widthM: number };
   features: GeneratedFeature[];
+  districts: GeneratedDistrict[];
+  segments: GeneratedSegment[];
 }
 
 export async function getRegion(db: Queryable, regionId: string): Promise<RegionRow> {
@@ -112,21 +116,50 @@ const mapState = (r: MarketItemStateDbRow): MarketItemStateRow => ({
   version: r.version,
 });
 
-/** One market item state; `forUpdate` locks the row (sales into a market are serialised). */
-export async function getMarketItemState(
+/**
+ * The statewide state of an item. Tamil Nadu has one price per crop: every mandi's row for the
+ * item holds the same state (see `writeStatewideItemState`). `forUpdate` locks all of those rows
+ * in market_id order (the tick's lock order), so sales at any mandi are serialised.
+ */
+export async function getStatewideItemState(
   db: Queryable,
-  marketId: string,
+  regionId: string,
   itemId: ItemId,
   opts: { forUpdate?: boolean } = {},
 ): Promise<MarketItemStateRow> {
   const { rows } = await db.query<MarketItemStateDbRow>(
-    `SELECT market_id, item_id, price_paise_per_kg, supply_pressure_kg, demand_kg_per_day, updated_day, version
-     FROM market_item_states WHERE market_id = $1 AND item_id = $2 ${opts.forUpdate ? 'FOR UPDATE' : ''}`,
-    [marketId, itemId],
+    `SELECT s.market_id, s.item_id, s.price_paise_per_kg, s.supply_pressure_kg, s.demand_kg_per_day,
+            s.updated_day, s.version
+     FROM market_item_states s JOIN markets m ON m.id = s.market_id
+     WHERE m.region_id = $1 AND s.item_id = $2
+     ORDER BY s.market_id ${opts.forUpdate ? 'FOR UPDATE OF s' : ''}`,
+    [regionId, itemId],
   );
   const r = rows[0];
-  if (!r) throw notFound('Market item', `${marketId}/${itemId}`);
+  if (!r) throw notFound('Market item', `${regionId}/${itemId}`);
   return mapState(r);
+}
+
+/** Write the statewide state of an item to every mandi's row (callers hold the row locks). */
+export async function writeStatewideItemState(
+  db: Queryable,
+  regionId: string,
+  state: MarketItemState,
+): Promise<void> {
+  await db.query(
+    `UPDATE market_item_states s
+     SET price_paise_per_kg = $3, supply_pressure_kg = $4, demand_kg_per_day = $5,
+         version = s.version + 1
+     FROM markets m
+     WHERE m.id = s.market_id AND m.region_id = $1 AND s.item_id = $2`,
+    [
+      regionId,
+      state.itemId,
+      Math.max(1, Math.round(state.pricePaisePerKg)),
+      Math.max(0, Math.round(state.supplyPressureKg)),
+      Math.max(0, Math.round(state.demandKgPerDay)),
+    ],
+  );
 }
 
 export async function listMarketItemStates(
@@ -143,24 +176,13 @@ export async function listMarketItemStates(
   return rows.map(mapState);
 }
 
-/**
- * Best (highest) current mandi price for an item across the region's markets. Used as the
- * reference for the P2P anti-manipulation price band.
- */
-export async function bestMandiPricePaise(
+/** Current statewide price of an item: the reference for the P2P anti-manipulation band. */
+export async function statewidePricePaise(
   db: Queryable,
   regionId: string,
   itemId: ItemId,
 ): Promise<number> {
-  const { rows } = await db.query<{ best: number | null }>(
-    `SELECT MAX(s.price_paise_per_kg)::bigint AS best
-     FROM market_item_states s JOIN markets m ON m.id = s.market_id
-     WHERE m.region_id = $1 AND s.item_id = $2`,
-    [regionId, itemId],
-  );
-  const best = rows[0]?.best;
-  if (best === null || best === undefined) throw notFound('Market price for', itemId);
-  return Number(best);
+  return Number((await getStatewideItemState(db, regionId, itemId)).pricePaisePerKg);
 }
 
 /**

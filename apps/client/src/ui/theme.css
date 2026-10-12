@@ -1,41 +1,61 @@
 /* Bharat Harvest — UI design system.
-   Dark warm glass over the 3D world; saffron accent, leaf green success, chili red danger,
-   indigo info. System font stack only (no network fonts). */
+   Game skin: parchment, carved wood and stone buttons drawn with Tiny Swords CC0 sprites
+   (public/ui/ts, see assets/licenses), dark ink outlines, chunky Baloo Thambi 2 type (bundled,
+   OFL; covers Tamil and ₹). Saffron accent, leaf green success, chili red danger. */
+
+@font-face {
+  font-family: 'Baloo Thambi 2';
+  src: url('/fonts/baloo-thambi-2-latin.woff2') format('woff2');
+  font-weight: 400 800;
+  font-display: swap;
+  unicode-range:
+    U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+    U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Baloo Thambi 2';
+  src: url('/fonts/baloo-thambi-2-tamil.woff2') format('woff2');
+  font-weight: 400 800;
+  font-display: swap;
+  unicode-range: U+0964-0965, U+0B82-0BFA, U+200C-200D, U+20B9, U+25CC;
+}
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
 
-  --bg-0: #0f0d0a;
-  --bg-1: #17140f;
-  --glass: rgba(24, 20, 15, 0.84);
-  --glass-strong: rgba(19, 16, 12, 0.95);
-  --glass-soft: rgba(255, 244, 228, 0.045);
-  --glass-hover: rgba(255, 244, 228, 0.08);
-  --line: rgba(255, 238, 214, 0.1);
-  --line-strong: rgba(255, 238, 214, 0.2);
+  --bg-0: #47aba9;
+  --bg-1: #fbf0d2;
+  --glass: #f3e4bb;
+  --glass-strong: #f7ebc8;
+  --glass-soft: rgba(120, 80, 30, 0.07);
+  --glass-hover: rgba(120, 80, 30, 0.14);
+  --line: rgba(60, 38, 20, 0.2);
+  --line-strong: rgba(60, 38, 20, 0.38);
+  /* Sprite outline colour: every hand-drawn edge uses it. */
+  --ink: #2a2638;
 
-  --text: #f4eee5;
-  --text-2: #cbbfae;
-  --text-3: #978b7a;
+  --text: #36240f;
+  --text-2: #634a2e;
+  --text-3: #8a7050;
 
-  --accent: #f2a12e;
-  --accent-strong: #ffb84d;
-  --accent-soft: rgba(242, 161, 46, 0.16);
-  --accent-ink: #261703;
-  --success: #74c35f;
-  --success-soft: rgba(116, 195, 95, 0.15);
-  --warning: #f0c24b;
-  --warning-soft: rgba(240, 194, 75, 0.15);
-  --danger: #ef5b44;
-  --danger-soft: rgba(239, 91, 68, 0.16);
-  --info: #8790f4;
-  --info-soft: rgba(135, 144, 244, 0.16);
+  --accent: #e07a1f;
+  --accent-strong: #b85a08;
+  --accent-soft: rgba(216, 111, 18, 0.13);
+  --accent-ink: #ffffff;
+  --success: #2e8b47;
+  --success-soft: rgba(46, 139, 71, 0.12);
+  --warning: #a87a06;
+  --warning-soft: rgba(200, 150, 20, 0.14);
+  --danger: #c43d2a;
+  --danger-soft: rgba(196, 61, 42, 0.12);
+  --info: #4655c8;
+  --info-soft: rgba(70, 85, 200, 0.11);
 
-  --grade-excellent: #74c35f;
-  --grade-good: #b4d455;
-  --grade-fair: #f0c24b;
-  --grade-poor: #f08a3c;
-  --grade-unsuitable: #ef5b44;
+  --grade-excellent: #2e8b47;
+  --grade-good: #5f9420;
+  --grade-fair: #a87a06;
+  --grade-poor: #c8651c;
+  --grade-unsuitable: #c43d2a;
 
   --space-1: 4px;
   --space-2: 8px;
@@ -46,18 +66,22 @@
   --space-7: 32px;
   --space-8: 40px;
 
-  --radius-sm: 6px;
+  --radius-sm: 8px;
   --radius: 10px;
   --radius-lg: 14px;
-  --shadow: 0 18px 48px rgba(0, 0, 0, 0.45), 0 2px 6px rgba(0, 0, 0, 0.35);
+  --shadow: 0 4px 0 rgba(42, 38, 56, 0.35), 0 10px 24px rgba(30, 20, 10, 0.22);
 
   --font:
-    ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans', 'Helvetica Neue',
-    Arial, sans-serif;
+    'Baloo Thambi 2', ui-rounded, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto,
+    'Noto Sans', Arial, sans-serif;
+  --cursor: url('/ui/ts/cursor.png') 1 1, auto;
+  /* Turns the teal stone sprites saffron (primary buttons, active tiles). */
+  --tint-saffron: hue-rotate(-160deg) saturate(2.6) brightness(1.02);
+  --cursor-hand: url('/ui/ts/cursor.png') 1 1, pointer;
   --font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
   --fs-xs: 11px;
-  --fs-sm: 12.5px;
-  --fs-md: 14px;
+  --fs-sm: 13px;
+  --fs-md: 15px;
   --fs-lg: 16px;
   --fs-xl: 20px;
   --fs-2xl: 28px;
@@ -84,8 +108,24 @@ body,
   color: var(--text);
   font-family: var(--font);
   font-size: var(--fs-md);
-  line-height: 1.45;
+  line-height: 1.4;
   -webkit-font-smoothing: antialiased;
+  cursor: var(--cursor);
+}
+button,
+a,
+[role='button'],
+[role='radio'],
+[role='tab'],
+label,
+select {
+  cursor: var(--cursor-hand);
+}
+h1,
+h2,
+h3 {
+  font-weight: 800;
+  letter-spacing: 0;
 }
 
 button,
@@ -178,25 +218,50 @@ textarea {
 
 /* ---------- glass surfaces ---------- */
 
+/* Small surfaces: a parchment card with a hand-drawn ink outline and a chunky drop. */
 .bh-glass {
+  position: relative;
   background: var(--glass);
-  border: 1px solid var(--line);
+  border: 3px solid var(--ink);
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow);
-  backdrop-filter: blur(14px) saturate(1.15);
-  -webkit-backdrop-filter: blur(14px) saturate(1.15);
+  box-shadow:
+    inset 0 0 0 2px rgba(255, 255, 255, 0.45),
+    inset 0 -4px 0 rgba(120, 80, 30, 0.12),
+    var(--shadow);
+}
+
+/* Big surfaces (panels, dialogs, Thatha): the Tiny Swords parchment banner, drawn behind the
+   content by a pseudo-element so layout and hit areas are unchanged. */
+.bh-scroll {
+  isolation: isolate;
+  background: none;
+  border-color: transparent;
+  box-shadow: none;
+}
+.bh-scroll::before {
+  content: '';
+  position: absolute;
+  inset: -8px -14px -16px;
+  z-index: -1;
+  pointer-events: none;
+  border-style: solid;
+  /* 34px sides keep the curled feet inside the corners so they never tile */
+  border-width: 14px 34px 30px;
+  border-image: url('/ui/ts/banner.png') 14 34 30 34 fill / 14px 34px 30px round;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 6px 0 rgba(42, 38, 56, 0.28)) drop-shadow(0 14px 18px rgba(20, 12, 4, 0.3));
 }
 
 .bh-card {
   background: var(--glass-soft);
-  border: 1px solid var(--line);
+  border: 2px solid var(--line);
   border-radius: var(--radius);
   padding: var(--space-3) var(--space-4);
 }
 
 .bh-section-title {
   font-size: var(--fs-xs);
-  font-weight: 650;
+  font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--text-3);
@@ -205,95 +270,114 @@ textarea {
 
 /* ---------- buttons ---------- */
 
+/* Stone buttons: the Tiny Swords sprite draws the rim (half scale) and the face is its flat
+   colour, so wide buttons never show a stretched or tiled texture. Primary is the same stone
+   tinted saffron, danger the red sprite; pressed swaps to the pressed sprite. */
 .bh-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: var(--space-2);
-  height: 34px;
-  padding: 0 var(--space-4);
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--line-strong);
-  background: var(--glass-soft);
-  color: var(--text);
+  height: 38px;
+  padding: 0 8px 1px;
+  border-style: solid;
+  border-width: 6px 7px 10px;
+  border-image: url('/ui/ts/btn-blue.png') 12 14 20 14 / 6px 7px 10px;
+  background: #8cc3c4 padding-box;
+  color: #1d2a3a;
   font-size: var(--fs-md);
-  font-weight: 560;
-  cursor: pointer;
+  font-weight: 800;
+  line-height: 1;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.35);
   white-space: nowrap;
-  transition:
-    background 0.15s,
-    border-color 0.15s,
-    transform 0.05s;
+  transition: filter 0.12s;
 }
 .bh-btn:hover:not(:disabled) {
-  background: var(--glass-hover);
-  border-color: rgba(255, 238, 214, 0.3);
+  filter: brightness(1.08);
 }
 .bh-btn:active:not(:disabled) {
-  transform: translateY(1px);
+  border-image-source: url('/ui/ts/btn-blue-pressed.png');
+  background-color: #83a2ac;
+  padding-top: 3px;
 }
 .bh-btn:disabled {
-  opacity: 0.45;
+  border-image-source: url('/ui/ts/btn-disable.png');
+  background-color: #bea288;
+  color: rgba(29, 42, 58, 0.55);
   cursor: not-allowed;
 }
 .bh-btn.sm {
-  height: 28px;
-  padding: 0 var(--space-3);
+  height: 32px;
+  padding: 0 6px 1px;
+  border-width: 5px 6px 8px;
+  border-image-width: 5px 6px 8px;
   font-size: var(--fs-sm);
 }
 .bh-btn.lg {
-  height: 42px;
-  padding: 0 var(--space-6);
+  height: 48px;
+  padding: 0 var(--space-4) 2px;
   font-size: var(--fs-lg);
 }
 .bh-btn.block {
   width: 100%;
 }
 .bh-btn.primary {
-  background: linear-gradient(180deg, var(--accent-strong), var(--accent));
-  border-color: transparent;
-  color: var(--accent-ink);
-  font-weight: 680;
+  color: #2e1500;
+  filter: var(--tint-saffron);
 }
 .bh-btn.primary:hover:not(:disabled) {
-  background: linear-gradient(180deg, #ffc46a, var(--accent-strong));
+  filter: var(--tint-saffron) brightness(1.1);
+}
+.bh-btn.primary:disabled {
+  filter: none;
 }
 .bh-btn.danger {
-  background: var(--danger-soft);
-  border-color: rgba(239, 91, 68, 0.45);
-  color: #ffb4a8;
+  border-image-source: url('/ui/ts/btn-red.png');
+  background-color: #c88176;
+  color: #fff;
+  text-shadow: 0 1px 0 rgba(60, 10, 10, 0.6);
 }
-.bh-btn.danger:hover:not(:disabled) {
-  background: rgba(239, 91, 68, 0.26);
+.bh-btn.danger:active:not(:disabled) {
+  border-image-source: url('/ui/ts/btn-red-pressed.png');
 }
 .bh-btn.ghost {
-  background: transparent;
+  border-image: none;
   border-color: transparent;
+  background: transparent;
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  text-shadow: none;
 }
 .bh-btn.ghost:hover:not(:disabled) {
   background: var(--glass-hover);
+  filter: none;
+}
+.bh-btn.ghost:active:not(:disabled) {
+  padding-top: 1px;
 }
 
+/* Square stone tiles (Tiny Swords 9-slice). */
 .bh-icon-btn {
   display: inline-grid;
   place-items: center;
-  width: 34px;
-  height: 34px;
-  border-radius: var(--radius-sm);
-  border: 1px solid transparent;
-  background: transparent;
-  color: var(--text-2);
-  cursor: pointer;
+  width: 36px;
+  height: 36px;
+  border-style: solid;
+  border-width: 6px 6px 9px;
+  border-image: url('/ui/ts/tile.png') 14 14 22 14 fill / 6px 6px 9px;
+  background: none;
+  color: #1d2a3a;
   position: relative;
 }
 .bh-icon-btn:hover {
-  background: var(--glass-hover);
-  color: var(--text);
+  filter: brightness(1.08);
+}
+.bh-icon-btn:active {
+  border-image-source: url('/ui/ts/tile-pressed.png');
 }
 .bh-icon-btn.active {
-  background: var(--accent-soft);
-  color: var(--accent-strong);
-  border-color: rgba(242, 161, 46, 0.35);
+  filter: var(--tint-saffron);
+  color: #3b1d02;
 }
 
 .bh-spinner {
@@ -329,15 +413,16 @@ textarea {
 }
 .bh-error-text {
   font-size: var(--fs-sm);
-  color: #ff9b8a;
+  color: var(--danger);
 }
 .bh-input,
 .bh-select {
-  height: 36px;
+  height: 38px;
   padding: 0 var(--space-3);
-  background: rgba(0, 0, 0, 0.28);
-  border: 1px solid var(--line-strong);
+  background: #fff8e4;
+  border: 2px solid rgba(42, 38, 56, 0.55);
   border-radius: var(--radius-sm);
+  box-shadow: inset 0 2px 0 rgba(120, 80, 30, 0.12);
   color: var(--text);
   width: 100%;
   min-width: 0;
@@ -381,25 +466,30 @@ textarea {
 .bh-segmented {
   display: inline-flex;
   padding: 3px;
-  gap: 2px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
-  background: rgba(0, 0, 0, 0.25);
+  gap: 3px;
+  border: 2px solid rgba(42, 38, 56, 0.45);
+  border-radius: var(--radius);
+  background: var(--glass-soft);
 }
 .bh-segmented button {
   border: 0;
   background: transparent;
   padding: 5px 12px;
-  border-radius: 4px;
+  border-radius: 7px;
   color: var(--text-2);
-  cursor: pointer;
   font-size: var(--fs-sm);
-  font-weight: 560;
+  font-weight: 700;
+}
+.bh-segmented button:hover {
+  background: var(--glass-hover);
 }
 .bh-segmented button[aria-pressed='true'],
 .bh-segmented button[aria-selected='true'] {
-  background: var(--accent-soft);
-  color: var(--accent-strong);
+  background: #ffd36b;
+  color: #3a2408;
+  box-shadow:
+    0 0 0 2px var(--ink),
+    0 3px 0 rgba(42, 38, 56, 0.4);
 }
 
 /* ---------- tabs ---------- */
@@ -407,7 +497,7 @@ textarea {
 .bh-tabs {
   display: flex;
   gap: var(--space-1);
-  border-bottom: 1px solid var(--line);
+  border-bottom: 2px dashed var(--line);
   margin-bottom: var(--space-3);
   overflow-x: auto;
 }
@@ -416,14 +506,18 @@ textarea {
   background: transparent;
   padding: var(--space-2) var(--space-3);
   color: var(--text-2);
-  cursor: pointer;
-  font-weight: 560;
-  border-bottom: 2px solid transparent;
-  margin-bottom: -1px;
+  font-weight: 700;
+  border-bottom: 4px solid transparent;
+  border-radius: 6px 6px 0 0;
+  margin-bottom: -2px;
   white-space: nowrap;
+}
+.bh-tabs button:hover {
+  background: var(--glass-hover);
 }
 .bh-tabs button[aria-selected='true'] {
   color: var(--text);
+  font-weight: 800;
   border-bottom-color: var(--accent);
 }
 
@@ -450,7 +544,7 @@ textarea {
 }
 .bh-table td {
   padding: 7px var(--space-2);
-  border-bottom: 1px solid rgba(255, 238, 214, 0.05);
+  border-bottom: 1px solid rgba(80, 55, 30, 0.06);
   vertical-align: middle;
 }
 .bh-table tbody tr:hover {
@@ -545,7 +639,7 @@ textarea {
 .bh-progress {
   height: 6px;
   border-radius: 3px;
-  background: rgba(255, 238, 214, 0.08);
+  background: rgba(80, 55, 30, 0.1);
   overflow: hidden;
 }
 .bh-progress > span {
@@ -622,9 +716,9 @@ textarea {
   border-radius: var(--radius-sm);
   background: linear-gradient(
     90deg,
-    rgba(255, 238, 214, 0.05) 0%,
-    rgba(255, 238, 214, 0.11) 50%,
-    rgba(255, 238, 214, 0.05) 100%
+    rgba(80, 55, 30, 0.06) 0%,
+    rgba(80, 55, 30, 0.13) 50%,
+    rgba(80, 55, 30, 0.06) 100%
   );
   background-size: 200% 100%;
   animation: bh-shimmer 1.3s ease-in-out infinite;
@@ -685,8 +779,8 @@ textarea {
 
 .bh-panel {
   position: absolute;
-  top: calc(var(--topbar-h) + var(--space-3));
-  right: var(--space-3);
+  top: calc(var(--topbar-h) + var(--space-5));
+  right: var(--space-5);
   bottom: var(--space-3);
   width: var(--panel-w);
   max-width: calc(100vw - var(--dock-w) - var(--space-7));
@@ -713,14 +807,29 @@ textarea {
   align-items: flex-start;
   justify-content: space-between;
   gap: var(--space-3);
-  padding: var(--space-4) var(--space-4) var(--space-3) var(--space-5);
-  border-bottom: 1px solid var(--line);
+  padding: var(--space-2) var(--space-3) var(--space-3) var(--space-3);
+  border-bottom: 2px dashed var(--line);
 }
-.bh-panel-header h2 {
-  margin: 0;
+/* Titles sit on a yellow ribbon (Tiny Swords 3-slice). */
+.bh-panel-header h2,
+.bh-dialog header h2 {
+  display: inline-block;
+  max-width: 100%;
+  height: 44px;
+  margin: 0 0 2px -6px;
+  padding: 0 4px 6px;
+  border-style: solid;
+  border-width: 0 30px;
+  border-image: url('/ui/ts/ribbon-yellow.png') 0 44 fill / 0 30px;
+  image-rendering: pixelated;
   font-size: var(--fs-xl);
-  font-weight: 680;
-  letter-spacing: -0.01em;
+  line-height: 40px;
+  font-weight: 800;
+  color: #3a2408;
+  text-shadow: 0 1px 0 rgba(255, 240, 180, 0.6);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .bh-panel-header .subtitle {
   font-size: var(--fs-sm);
@@ -730,13 +839,13 @@ textarea {
 .bh-panel-body {
   flex: 1;
   overflow-y: auto;
-  padding: var(--space-4) var(--space-5) var(--space-5);
+  padding: var(--space-3) var(--space-3) var(--space-4);
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 238, 214, 0.18) transparent;
+  scrollbar-color: rgba(80, 55, 30, 0.35) transparent;
 }
 .bh-panel-footer {
-  border-top: 1px solid var(--line);
-  padding: var(--space-3) var(--space-5);
+  border-top: 2px dashed var(--line);
+  padding: var(--space-3) var(--space-3) 0;
 }
 
 /* ---------- dialog ---------- */
@@ -744,8 +853,7 @@ textarea {
 .bh-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(8, 6, 4, 0.55);
-  backdrop-filter: blur(3px);
+  background: rgba(20, 30, 40, 0.5);
   display: grid;
   place-items: center;
   z-index: 100;
@@ -758,39 +866,43 @@ textarea {
   }
 }
 .bh-dialog {
-  width: min(520px, 100%);
-  max-height: calc(100vh - 48px);
+  position: relative;
+  width: min(520px, calc(100% - 24px));
+  max-height: calc(100vh - 64px);
   display: flex;
   flex-direction: column;
-  background: var(--glass-strong);
-  border: 1px solid var(--line-strong);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow);
+  animation: bh-pop 0.22s cubic-bezier(0.3, 1.5, 0.5, 1);
+}
+@keyframes bh-pop {
+  from {
+    transform: scale(0.85);
+    opacity: 0;
+  }
 }
 .bh-dialog.wide {
   width: min(760px, 100%);
 }
 .bh-dialog header {
-  padding: var(--space-5) var(--space-6) var(--space-2);
-}
-.bh-dialog header h2 {
-  margin: 0;
-  font-size: var(--fs-xl);
+  padding: var(--space-2) var(--space-4) var(--space-1);
 }
 .bh-dialog .body {
-  padding: var(--space-2) var(--space-6) var(--space-4);
+  padding: var(--space-2) var(--space-4) var(--space-3);
   overflow-y: auto;
 }
 .bh-dialog footer {
   display: flex;
   justify-content: flex-end;
   gap: var(--space-2);
-  padding: var(--space-4) var(--space-6) var(--space-5);
-  border-top: 1px solid var(--line);
+  padding: var(--space-3) var(--space-4) 0;
+  border-top: 2px dashed var(--line);
 }
 
 /* ---------- toasts ---------- */
 
+/* Thatha's story owns the screen; news waits until it is over. */
+body:has(.tour-story) .bh-toasts {
+  display: none;
+}
 .bh-toasts {
   position: fixed;
   right: var(--space-4);
@@ -807,8 +919,9 @@ textarea {
   display: flex;
   gap: var(--space-3);
   padding: var(--space-3) var(--space-3) var(--space-3) var(--space-4);
-  border-left: 3px solid var(--info);
-  animation: bh-toast-in 0.2s ease-out;
+  border-left-width: 8px;
+  border-left-color: var(--info);
+  animation: bh-toast-in 0.3s cubic-bezier(0.3, 1.5, 0.5, 1);
 }
 .bh-toast.success {
   border-left-color: var(--success);
@@ -820,7 +933,7 @@ textarea {
   border-left-color: var(--danger);
 }
 .bh-toast .t-title {
-  font-weight: 650;
+  font-weight: 800;
   font-size: var(--fs-md);
 }
 .bh-toast .t-body {
@@ -830,7 +943,7 @@ textarea {
 @keyframes bh-toast-in {
   from {
     opacity: 0;
-    transform: translateY(8px);
+    transform: translateX(40px) scale(0.9);
   }
 }
 
@@ -854,8 +967,20 @@ textarea {
   display: flex;
   align-items: center;
   gap: var(--space-4);
-  padding: 0 var(--space-3) 0 var(--space-4);
+  padding: 0 var(--space-2) 0 var(--space-2);
   z-index: 30;
+}
+/* Wooden HUD boards: carved plank sprite with an ink edge. */
+.bh-topbar.bh-glass,
+.bh-dock.bh-glass {
+  background: none;
+  border-style: solid;
+  border-width: 8px;
+  border-image: url('/ui/ts/carved.png') 16 fill / 8px round;
+  border-radius: 0;
+  box-shadow: none;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 4px 0 rgba(42, 38, 56, 0.4));
 }
 .bh-brand {
   display: flex;
@@ -877,13 +1002,19 @@ textarea {
   max-width: 220px;
 }
 .bh-topbar .divider {
-  width: 1px;
+  width: 3px;
   height: 28px;
-  background: var(--line);
+  border-radius: 2px;
+  background: rgba(60, 38, 20, 0.3);
 }
 .bh-topbar .cash {
-  font-size: var(--fs-xl);
-  font-weight: 720;
+  font-size: var(--fs-2xl);
+  font-weight: 800;
+  line-height: 1;
+  color: #2e5e1c;
+  text-shadow:
+    0 2px 0 rgba(255, 245, 210, 0.7),
+    0 0 1px rgba(46, 94, 28, 0.4);
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.01em;
   cursor: default;
@@ -943,44 +1074,49 @@ textarea {
   position: absolute;
   top: calc(var(--topbar-h) + var(--space-3) * 2);
   left: var(--space-3);
-  width: var(--dock-w);
+  width: calc(var(--dock-w) + 4px);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
-  padding: var(--space-2) 0;
+  gap: 4px;
+  padding: var(--space-1) 0;
   z-index: 25;
 }
 .bh-dock button {
-  width: 52px;
-  height: 50px;
+  width: 54px;
+  height: 54px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
-  border: 1px solid transparent;
-  border-radius: var(--radius);
-  background: transparent;
-  color: var(--text-2);
-  cursor: pointer;
+  gap: 0;
+  border-style: solid;
+  border-width: 6px 6px 9px;
+  border-image: url('/ui/ts/tile.png') 14 14 22 14 fill / 6px 6px 9px;
+  background: none;
+  color: #1d2a3a;
   font-size: 10px;
-  font-weight: 600;
+  font-weight: 800;
+  line-height: 1.1;
   position: relative;
+  transition: transform 0.12s;
 }
 .bh-dock button:hover {
-  background: var(--glass-hover);
-  color: var(--text);
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+.bh-dock button:active {
+  border-image-source: url('/ui/ts/tile-pressed.png');
 }
 .bh-dock button[aria-pressed='true'] {
-  background: var(--accent-soft);
-  color: var(--accent-strong);
-  border-color: rgba(242, 161, 46, 0.3);
+  filter: var(--tint-saffron);
+  color: #3b1d02;
 }
 .bh-dock .sep {
   width: 32px;
-  height: 1px;
-  background: var(--line);
+  height: 3px;
+  border-radius: 2px;
+  background: rgba(60, 38, 20, 0.3);
   margin: 4px 0;
 }
 
@@ -1104,17 +1240,22 @@ textarea {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(1200px 600px at 70% 30%, rgba(242, 161, 46, 0.18), transparent 60%),
-    radial-gradient(900px 500px at 20% 80%, rgba(116, 195, 95, 0.12), transparent 60%),
-    linear-gradient(160deg, #1d1710, #0f0d0a);
+    radial-gradient(1200px 600px at 70% 30%, rgba(216, 111, 18, 0.12), transparent 60%),
+    radial-gradient(900px 500px at 20% 80%, rgba(46, 139, 71, 0.1), transparent 60%),
+    linear-gradient(160deg, #a9d3dc, #cfe6ea);
 }
 .bh-landing-vignette {
   position: absolute;
   inset: 0;
   pointer-events: none;
   background:
-    linear-gradient(90deg, rgba(10, 8, 6, 0.86) 0%, rgba(10, 8, 6, 0.55) 34%, transparent 62%),
-    linear-gradient(0deg, rgba(10, 8, 6, 0.5), transparent 30%);
+    linear-gradient(
+      90deg,
+      rgba(251, 247, 239, 0.94) 0%,
+      rgba(251, 247, 239, 0.7) 34%,
+      transparent 62%
+    ),
+    linear-gradient(0deg, rgba(251, 247, 239, 0.6), transparent 30%);
 }
 .bh-landing-content {
   position: absolute;
@@ -1187,7 +1328,7 @@ textarea {
 /* ---------- misc feature bits ---------- */
 
 .bh-factor {
-  border-top: 1px solid rgba(255, 238, 214, 0.06);
+  border-top: 1px solid rgba(80, 55, 30, 0.07);
   padding: 6px 0;
 }
 .bh-factor .head {
@@ -1228,7 +1369,7 @@ textarea {
   width: 18px;
   height: 18px;
   border-radius: 5px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid var(--line-strong);
 }
 
 .bh-plot-card {
@@ -1290,7 +1431,7 @@ textarea {
 /* ── Onboarding tooltip ─────────────────────────────────────────────────── */
 .bh-onboarding-tooltip {
   border-radius: var(--radius-lg);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.38);
+  box-shadow: var(--shadow);
   pointer-events: all;
   animation: bh-fade-in 0.2s ease;
 }
@@ -1313,5 +1454,783 @@ textarea {
   }
   50% {
     opacity: 0.45;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Tamil Nadu map UI */
+
+.tn-label-layer {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.tn-district-label {
+  position: absolute;
+  left: 0;
+  top: 0;
+  pointer-events: none;
+  text-align: center;
+  white-space: nowrap;
+  font: 600 12px/1.1 var(--font);
+  color: #3b2c1c;
+  text-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.9),
+    0 0 6px rgba(255, 255, 255, 0.85);
+}
+.tn-district-label small {
+  display: block;
+  font-weight: 500;
+  font-size: 10px;
+  opacity: 0.75;
+}
+.tn-mandi-label {
+  pointer-events: none;
+  white-space: nowrap;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: rgba(181, 83, 47, 0.92);
+  color: #fff;
+  font: 600 10px/1.4 var(--font);
+}
+
+.tn-tooltip {
+  position: fixed;
+  z-index: 40;
+  display: grid;
+  gap: 2px;
+  padding: 10px 12px;
+  border-radius: var(--radius);
+  font-size: var(--fs-sm);
+  pointer-events: none;
+  max-width: 280px;
+}
+.tn-mine {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.tn-layers {
+  position: absolute;
+  left: calc(var(--dock-w) + 28px);
+  bottom: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  padding: 6px;
+  border-radius: 999px;
+  max-width: calc(100vw - var(--dock-w) - 60px);
+}
+.tn-layers > button {
+  border: 0;
+  background: transparent;
+  color: var(--text-2);
+  font: 600 var(--fs-sm) var(--font);
+  padding: 7px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.tn-layers > button[aria-checked='true'] {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+.tn-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 0 10px;
+  font-size: var(--fs-xs);
+  color: var(--text-2);
+}
+.tn-legend i {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  margin-right: 4px;
+  vertical-align: -1px;
+}
+
+.tn-guide {
+  position: absolute;
+  top: calc(var(--topbar-h) + 16px);
+  left: calc(var(--dock-w) + 28px);
+  width: 320px;
+  padding: 14px 16px;
+  border-radius: var(--radius-lg);
+  border-left: 4px solid var(--accent);
+}
+.tn-guide h3 {
+  margin: 4px 0 4px;
+  font-size: var(--fs-lg);
+}
+.tn-guide p {
+  margin: 0 0 10px;
+  color: var(--text-2);
+  font-size: var(--fs-sm);
+  line-height: 1.45;
+}
+.tn-guide-step {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.tn-guide-dots {
+  display: flex;
+  gap: 4px;
+}
+.tn-guide-dots i {
+  width: 18px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--line-strong);
+}
+.tn-guide-dots i.on {
+  background: var(--accent);
+}
+
+.tn-facts {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.tn-facts > div {
+  display: grid;
+  gap: 2px;
+  padding: 10px;
+  border-radius: var(--radius);
+  background: var(--glass-soft);
+  font-size: var(--fs-xs);
+}
+.tn-facts strong {
+  font-size: var(--fs-lg);
+}
+
+.tn-rain {
+  margin: 0;
+}
+.tn-rain-bars {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 4px;
+  height: 80px;
+  align-items: end;
+}
+.tn-rain-col {
+  display: grid;
+  grid-template-rows: 1fr auto;
+  height: 100%;
+  align-items: end;
+  text-align: center;
+  font-size: 10px;
+  color: var(--text-3);
+}
+.tn-rain-bar {
+  border-radius: 3px 3px 0 0;
+  background: linear-gradient(#5aa0d6, #2f7fb8);
+}
+.tn-rain figcaption {
+  margin-top: 6px;
+  font-size: var(--fs-xs);
+}
+
+.tn-h3 {
+  margin: 8px 0 0;
+  font-size: var(--fs-md);
+}
+.tn-holdings,
+.tn-find-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.tn-holding {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--bg-1);
+}
+.tn-holding-main {
+  display: grid;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+.tn-holding-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.tn-holding-tags span {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--glass-soft);
+  font-size: var(--fs-xs);
+  color: var(--text-2);
+}
+.tn-holding-best {
+  font-size: var(--fs-sm);
+}
+.tn-holding-side {
+  display: grid;
+  justify-items: end;
+  align-content: space-between;
+  gap: 6px;
+  text-align: right;
+}
+.tn-price {
+  font-size: var(--fs-lg);
+  font-weight: 700;
+}
+.tn-sub {
+  font-size: var(--fs-xs);
+}
+
+.tn-find-group {
+  display: grid;
+  gap: 4px;
+}
+.tn-find-list button {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--bg-1);
+  color: var(--text);
+  font: inherit;
+  font-size: var(--fs-sm);
+  cursor: pointer;
+  text-align: left;
+}
+.tn-find-list button:hover {
+  border-color: var(--accent);
+}
+
+/* ---- tour-*: story intro + Muthu Thatha guided tour (features/tour) ---- */
+.tour-story {
+  position: fixed;
+  inset: 0;
+  z-index: 260;
+  pointer-events: none;
+}
+.tour-bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 9vh;
+  background: #120c06;
+  animation: tour-bar-in 0.6s ease-out both;
+}
+.tour-bar.top {
+  top: 0;
+}
+.tour-bar.bottom {
+  bottom: 0;
+}
+@keyframes tour-bar-in {
+  from {
+    transform: scaleY(0);
+  }
+}
+.tour-story-cast {
+  position: absolute;
+  left: 50%;
+  bottom: calc(9vh + 16px);
+  transform: translateX(-50%);
+  width: min(720px, calc(100vw - 32px));
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  pointer-events: auto;
+  animation: tour-rise 0.5s ease-out both;
+}
+.tour-bubble {
+  position: relative;
+  flex: 1;
+  padding: 14px 18px 8px;
+}
+.tour-bubble p {
+  margin: 0 0 12px;
+  font-size: var(--fs-xl);
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--text);
+  animation: tour-fade 0.4s ease-out both;
+}
+.tour-dots {
+  display: flex;
+  gap: 4px;
+}
+.tour-dots i {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid var(--ink);
+  background: var(--glass-soft);
+}
+.tour-dots i.on {
+  background: var(--accent);
+}
+.tour-icon-btn {
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-style: solid;
+  border-width: 5px 5px 8px;
+  border-image: url('/ui/ts/tile.png') 14 14 22 14 fill / 5px 5px 8px;
+  background: none;
+  color: #1d2a3a;
+}
+.tour-icon-btn:hover {
+  filter: brightness(1.08);
+}
+.tour-card {
+  position: absolute;
+  top: calc(var(--topbar-h) + 28px);
+  left: calc(var(--dock-w) + 40px);
+  width: 400px;
+  max-width: calc(100vw - var(--dock-w) - 56px);
+  display: flex;
+  gap: 10px;
+  padding: 10px 12px 4px;
+  /* above the spotlight dim (240) so Thatha is always readable */
+  z-index: 250;
+  animation: tour-rise 0.35s ease-out both;
+}
+/* A dialog (crop picker, confirmation) owns the screen: Thatha steps behind its backdrop. */
+body:has([aria-modal='true']) .tour-card {
+  z-index: 90;
+}
+/* A blocked click elsewhere shakes the guide: "over here!" */
+.tour-card.nudge,
+.tour-bubble.nudge {
+  animation: guide-shake 0.45s ease-in-out;
+}
+@keyframes guide-shake {
+  20%,
+  60% {
+    transform: translateX(-7px) rotate(-1deg);
+  }
+  40%,
+  80% {
+    transform: translateX(7px) rotate(1deg);
+  }
+}
+.tour-card-cast {
+  position: relative;
+  flex: none;
+}
+.tour-card-body {
+  flex: 1;
+  min-width: 0;
+}
+.tour-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: var(--fs-xs);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--accent-strong);
+}
+.tour-card h3 {
+  margin: 0 0 2px;
+  font-size: var(--fs-xl);
+  line-height: 1.2;
+}
+.tour-card p {
+  margin: 0 0 8px;
+  color: var(--text);
+  font-size: var(--fs-md);
+  line-height: 1.4;
+}
+.tour-checks {
+  display: flex;
+  gap: 5px;
+  margin: 0 0 10px;
+  padding: 0;
+  list-style: none;
+}
+.tour-checks li {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid var(--ink);
+  background: var(--glass-soft);
+  font-size: 11px;
+  font-weight: 800;
+  color: #fff;
+}
+.tour-checks li.done {
+  background: var(--success);
+  border-color: var(--success);
+  animation: tour-pop 0.4s ease-out;
+}
+.tour-checks li.now {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+.tour-thatha {
+  display: block;
+  overflow: visible;
+}
+.tour-thatha .tour-mouth {
+  transform-box: fill-box;
+  transform-origin: center;
+  transform: scaleY(0.35);
+}
+.tour-thatha.talking .tour-mouth {
+  animation: tour-talk 0.22s ease-in-out infinite alternate;
+}
+.tour-thatha.talking {
+  animation: tour-nod 1.6s ease-in-out infinite;
+}
+.tour-thatha .tour-eyes {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: tour-blink 4.2s infinite;
+}
+@keyframes tour-talk {
+  from {
+    transform: scaleY(0.3);
+  }
+  to {
+    transform: scaleY(1.4);
+  }
+}
+@keyframes tour-nod {
+  50% {
+    transform: rotate(-2deg) translateY(-1px);
+  }
+}
+@keyframes tour-blink {
+  0%,
+  94%,
+  100% {
+    transform: scaleY(1);
+  }
+  97% {
+    transform: scaleY(0.1);
+  }
+}
+@keyframes tour-rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+.tour-story-cast {
+  animation-name: tour-rise-center;
+}
+@keyframes tour-rise-center {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 12px);
+  }
+}
+@keyframes tour-fade {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes tour-pop {
+  50% {
+    transform: scale(1.35);
+  }
+}
+.tour-spot,
+.tour-dim {
+  position: fixed;
+  border-radius: 10px;
+  pointer-events: none;
+  transition:
+    top 0.25s,
+    left 0.25s,
+    width 0.25s,
+    height 0.25s;
+}
+.tour-spot {
+  z-index: 255;
+}
+.tour-dim {
+  z-index: 240;
+  box-shadow: 0 0 0 200vmax rgba(18, 14, 24, 0.5);
+}
+/* Tiny Swords selection brackets at the four corners, breathing in and out. */
+.tour-spot::before {
+  content: '';
+  position: absolute;
+  inset: -8px;
+  background:
+    url('/ui/ts/corner-tl.png') top left / 21px 25px no-repeat,
+    url('/ui/ts/corner-tr.png') top right / 21px 25px no-repeat,
+    url('/ui/ts/corner-bl.png') bottom left / 21px 25px no-repeat,
+    url('/ui/ts/corner-br.png') bottom right / 21px 25px no-repeat;
+  image-rendering: pixelated;
+  animation: tour-bracket 0.7s ease-in-out infinite alternate;
+}
+@keyframes tour-bracket {
+  to {
+    inset: -15px;
+  }
+}
+.tour-arrow {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 16px);
+  width: 22px;
+  height: 30px;
+  background: url('/ui/ts/cursor.png') center / contain no-repeat;
+  image-rendering: pixelated;
+  transform: translateX(-50%) rotate(200deg);
+  animation: tour-bounce 0.6s ease-in-out infinite alternate;
+}
+.tour-arrow.below {
+  bottom: auto;
+  top: calc(100% + 16px);
+  transform: translateX(-50%) rotate(-20deg);
+}
+@keyframes tour-bounce {
+  to {
+    translate: 0 -6px;
+  }
+}
+.tour-reward {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.tour-xp {
+  position: absolute;
+  left: 50%;
+  top: 10px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  border: 2px solid var(--ink);
+  background: #f2c14e;
+  color: #3a2408;
+  font-size: var(--fs-md);
+  font-weight: 800;
+  white-space: nowrap;
+  transform: translateX(-50%);
+  animation: tour-xp-float 1.6s ease-out forwards;
+}
+@keyframes tour-xp-float {
+  to {
+    opacity: 0;
+    transform: translate(-50%, -36px);
+  }
+}
+.tour-reward i {
+  --a: calc(var(--i) * 20deg);
+  position: absolute;
+  left: 50%;
+  top: 40%;
+  width: 7px;
+  height: 11px;
+  border-radius: 2px;
+  background: hsl(calc(var(--i) * 47) 85% 55%);
+  animation: tour-confetti 1.3s cubic-bezier(0.2, 0.7, 0.4, 1) forwards;
+}
+@keyframes tour-confetti {
+  from {
+    transform: rotate(var(--a)) translateY(0) rotate(0);
+    opacity: 1;
+  }
+  to {
+    transform: rotate(var(--a)) translateY(-90px) rotate(540deg);
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tour-thatha,
+  .tour-thatha *,
+  .tour-spot,
+  .tour-arrow,
+  .tour-reward i,
+  .tour-story-cast,
+  .tour-card {
+    animation: none !important;
+  }
+}
+@media (max-width: 640px) {
+  .tour-story-cast .tour-thatha {
+    width: 90px;
+    height: 99px;
+  }
+  .tour-card {
+    left: 12px;
+    right: 12px;
+    width: auto;
+    max-width: none;
+  }
+}
+
+/* ---- Area view (3D close-up of one segment) ---- */
+.area-stage {
+  position: absolute;
+  inset: 0;
+  isolation: isolate; /* keep drei <Html> chips beneath the HUD panels */
+}
+.area-fade {
+  position: absolute;
+  inset: 0;
+  background: var(--bg-1);
+  pointer-events: none;
+  animation: area-fade-out 0.9s ease-out forwards;
+}
+@keyframes area-fade-out {
+  to {
+    opacity: 0;
+    visibility: hidden;
+  }
+}
+.area-loading {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  grid-auto-flow: column;
+  justify-content: center;
+  gap: 8px;
+  color: var(--text);
+}
+.area-hud {
+  position: absolute;
+  left: calc(var(--dock-w) + 28px);
+  bottom: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  padding: 8px 12px;
+  max-width: calc(100vw - var(--dock-w) - 60px);
+}
+.area-title {
+  display: grid;
+  line-height: 1.25;
+  font-size: var(--fs-sm);
+}
+.area-title strong {
+  font-size: var(--fs-lg);
+}
+.area-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  font-size: var(--fs-xs);
+}
+.area-legend i {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  margin-right: 4px;
+  vertical-align: -1px;
+}
+.area-tag {
+  white-space: nowrap;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: var(--glass);
+  color: var(--text);
+  border: 2px solid var(--ink);
+  box-shadow: 0 3px 0 rgba(42, 38, 56, 0.35);
+  font-size: var(--fs-sm);
+  font-weight: 700;
+}
+.area-tag-sale {
+  background: #3f9a46;
+  color: #fff;
+  font-weight: 800;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.35);
+}
+.area-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 12px 3px 5px;
+  border-radius: 999px;
+  border: 3px solid var(--ink);
+  background: #ffd36b;
+  color: #3a2408;
+  font: inherit;
+  font-size: var(--fs-md);
+  font-weight: 800;
+  white-space: nowrap;
+  box-shadow: 0 4px 0 rgba(42, 38, 56, 0.4);
+  position: relative;
+}
+.area-chip:hover,
+.area-chip:focus-visible {
+  transform: scale(1.08);
+}
+.area-chip-dot {
+  position: absolute;
+  left: 11px;
+  top: 50%;
+  margin-top: -5px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+.area-chip-plant > span:first-child {
+  width: 22px;
+  text-align: center;
+  font-size: var(--fs-md);
+  color: var(--accent);
+}
+.area-ring {
+  width: 24px;
+  height: 24px;
+}
+.area-ring circle {
+  fill: none;
+  stroke-width: 4;
+  stroke: var(--line);
+}
+.area-ring circle + circle {
+  stroke: var(--accent);
+  stroke-linecap: round;
+}
+.area-chip-ready {
+  border-color: #e0a91e;
+  background: #fff4cf;
+  animation: area-bounce 0.9s ease-in-out infinite;
+}
+.area-chip-ready .area-ring circle + circle {
+  stroke: #e0a91e;
+}
+@keyframes area-bounce {
+  50% {
+    transform: translateY(-6px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .area-chip-ready,
+  .area-fade {
+    animation: none;
+  }
+  .area-fade {
+    display: none;
   }
 }

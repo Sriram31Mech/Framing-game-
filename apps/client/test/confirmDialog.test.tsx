@@ -11,7 +11,7 @@ describe('ConfirmDialog', () => {
     const onCancel = vi.fn();
     render(
       <ConfirmDialog
-        title="Buy parcel HV-001?"
+        title="Buy parcel TN-001-02?"
         description="2.00 ha of laterite soil."
         lines={[
           { label: 'Purchase price', value: '₹2,00,000.00' },

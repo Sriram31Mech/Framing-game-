@@ -15,6 +15,7 @@ import {
 import { canIrrigate, irrigationSourceCostFactor, unfertilizedYieldPenalty } from './growth';
 import { p2pPriceBand, qualityPriceMultiplier } from './market';
 import { computeAllSuitability, computeSuitability } from './suitability';
+import { climateForEnv } from './tamilnadu';
 import {
   CROP_IDS,
   type AiIntent,
@@ -146,7 +147,7 @@ function bestPlanting(
     const price = expectedHarvestPrice(crop, view.day);
     const irrigationOptions = canIrrigate(env, false) ? [true, false] : [false];
     for (const irrigate of irrigationOptions) {
-      const suitability = computeSuitability(crop, env, view.climate, {
+      const suitability = computeSuitability(crop, env, climateForEnv(env, view.climate), {
         sowingDay: view.day,
         irrigated: irrigate,
       });
@@ -199,7 +200,7 @@ function parcelSeasonProfit(
   env: ParcelEnvironment,
   view: AiWorldView,
 ): { profit: Paise; score: number } {
-  const best = computeAllSuitability(env, view.climate)[0];
+  const best = computeAllSuitability(env, climateForEnv(env, view.climate))[0];
   if (!best) return { profit: 0, score: 0 };
   const crop = CROPS[best.cropId];
   const economics = estimateCropEconomics(crop, {

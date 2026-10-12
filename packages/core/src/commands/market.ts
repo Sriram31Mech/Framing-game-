@@ -11,7 +11,7 @@ import {
   type MarketItemState,
 } from '@bh/domain';
 import { companyDistanceToMarketKm } from '../world/parcels';
-import { getMarket, getMarketItemState } from '../world/region';
+import { getMarket, getStatewideItemState, writeStatewideItemState } from '../world/region';
 import { machineryEffectsFor } from '../companies/company';
 import type { Queryable } from '../db/pool';
 import { DomainError, ruleViolation } from '../errors';
@@ -69,8 +69,8 @@ export function qualityOfTakes(takes: LotTake[]): number {
 export async function sellToMarket(ctx: CommandContext, cmd: Cmd<'sell_to_market'>) {
   const me = ctx.actor.companyId;
   const market = await getMarket(ctx.client, ctx.regionId, cmd.marketId);
-  // Sales into one market item are serialised so each sees the price impact of the previous one.
-  const state = await getMarketItemState(ctx.client, market.id, cmd.itemId, {
+  // One statewide price per item: sales at any mandi are serialised so each sees the previous impact.
+  const state = await getStatewideItemState(ctx.client, ctx.regionId, cmd.itemId, {
     forUpdate: true,
   });
   await lockParties(ctx);
@@ -95,18 +95,7 @@ export async function sellToMarket(ctx: CommandContext, cmd: Cmd<'sell_to_market
   const costRelieved = takes.reduce((s, t) => s + t.costPaise, 0);
 
   const next = applyMarketSale(state, cmd.quantityKg);
-  await ctx.client.query(
-    `UPDATE market_item_states SET price_paise_per_kg = $3, supply_pressure_kg = $4, demand_kg_per_day = $5,
-       version = version + 1
-     WHERE market_id = $1 AND item_id = $2`,
-    [
-      market.id,
-      cmd.itemId,
-      Math.max(1, Math.round(next.pricePaisePerKg)),
-      Math.max(0, Math.round(next.supplyPressureKg)),
-      Math.max(0, Math.round(next.demandKgPerDay)),
-    ],
-  );
+  await writeStatewideItemState(ctx.client, ctx.regionId, next);
 
   const { rows } = await ctx.client.query<{ id: string }>(
     `INSERT INTO trades (region_id, kind, market_id, buyer_company_id, seller_company_id, item_id,

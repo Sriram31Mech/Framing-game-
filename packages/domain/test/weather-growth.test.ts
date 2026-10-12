@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
   CROPS,
-  HEMAVATI_CLIMATE,
   OVERRIPE_FAIL_DAYS,
   advanceCropDay,
   canIrrigate,
@@ -15,7 +14,7 @@ import {
   type CropPlotState,
   type DailyWeather,
 } from '../src';
-import { ENVS, simulateSeason } from './helpers';
+import { ENVS, HEMAVATI_CLIMATE, simulateSeason } from './helpers';
 
 describe('weather', () => {
   it('is a pure function of (seed, day)', () => {

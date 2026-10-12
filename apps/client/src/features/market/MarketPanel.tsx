@@ -48,6 +48,7 @@ export function minNetUnitPrice(netPaise: number, quantityKg: number): number {
   return Math.floor((netPaise / quantityKg) * 0.98);
 }
 
+/** Tamil Nadu has one price per crop; every mandi quotes it, so any mandi's row is the state price. */
 function PricesTable({ market }: { market: Market }) {
   const history = usePriceHistory(market.id, null, 30);
   const seriesByItem = useMemo(
@@ -62,7 +63,7 @@ function PricesTable({ market }: { market: Market }) {
       <thead>
         <tr>
           <th>Crop</th>
-          <th className="num">Price</th>
+          <th className="num">Tamil Nadu price</th>
           <th className="num">7 d</th>
           <th>30 d trend</th>
           <th className="num">vs base</th>
@@ -141,9 +142,13 @@ function SellForm({ market }: { market: Market }) {
     q.marketId === market.id;
   const tooMuch = qty > stock;
 
+  // Arriving from "Sell your harvest": preselect the crop and offer the whole stock.
   useEffect(() => {
-    if (prefill) useUiStore.setState({ sellPrefill: null });
-  }, [prefill]);
+    if (!prefill || !inv.data) return;
+    const prefillStock = available.find((a) => a.itemId === prefill)?.availableKg ?? 0;
+    if (prefillStock > 0) setQtyText(String(prefillStock));
+    useUiStore.setState({ sellPrefill: null });
+  }, [prefill, inv.data, available]);
 
   if (inv.isPending) return <Skeleton height={120} />;
   if (inv.isError) return <ErrorState error={inv.error} onRetry={() => void inv.refetch()} />;
@@ -219,7 +224,9 @@ function SellForm({ market }: { market: Market }) {
       </div>
       <div className="bh-card" data-testid="sell-quote" aria-live="polite">
         {qty <= 0 || tooMuch ? (
-          <span className="faint">Enter a quantity to get a live quote from {market.name}.</span>
+          <span className="faint">
+            Enter a quantity to get a live quote (Tamil Nadu price, delivered to {market.name}).
+          </span>
         ) : quote.isError && !quote.isFetching ? (
           isApiError(quote.error) && quote.error.code === 'INSUFFICIENT_STOCK' ? (
             <span className="tone-warning">
@@ -257,8 +264,8 @@ function SellForm({ market }: { market: Market }) {
       </div>
       {q && q.priceImpactPct > 8 ? (
         <div className="bh-callout warning">
-          Large volume moves the mandi price. Selling in smaller lots over several days, or to a
-          market with more demand, may fetch more.
+          Large volume moves the Tamil Nadu price. Selling in smaller lots over several days may
+          fetch more.
         </div>
       ) : null}
       {sell.isError ? (
@@ -353,7 +360,8 @@ function P2PListings() {
     <div className="bh-stack">
       <div className="bh-row between">
         <span className="muted" style={{ fontSize: 12.5 }}>
-          Buy directly from other companies. Prices are bounded to a band around mandi prices.
+          Buy directly from other companies. Prices are bounded to a band around the Tamil Nadu
+          price.
         </span>
         <select
           className="bh-select"
@@ -435,13 +443,12 @@ function MyListings({ markets }: { markets: Market[] }) {
   const [days, setDays] = useState(14);
   const qty = parseKg(qtyText) ?? 0;
   const price = parseRupees(priceText) ?? 0;
-  const best = item
-    ? Math.max(
-        0,
-        ...markets.map((m) => m.prices.find((p) => p.itemId === item)?.pricePaisePerKg ?? 0),
-      )
+  // One statewide price: every mandi quotes the same, so read it from any.
+  const statePrice = item
+    ? (markets[0]?.prices.find((p) => p.itemId === item)?.pricePaisePerKg ?? 0)
     : 0;
-  const band = best > 0 ? safe<[number, number] | null>(() => p2pPriceBand(best), null) : null;
+  const band =
+    statePrice > 0 ? safe<[number, number] | null>(() => p2pPriceBand(statePrice), null) : null;
   const stock = available.find((a) => a.itemId === item)?.availableKg ?? 0;
   const outOfBand = !!band && price > 0 && (price < band[0] || price > band[1]);
   const valid = !!item && qty > 0 && qty <= stock && price > 0 && !outOfBand;
@@ -509,8 +516,8 @@ function MyListings({ markets }: { markets: Market[] }) {
                 />
                 <span className={`bh-hint${outOfBand ? ' tone-danger' : ''}`}>
                   {band
-                    ? `Allowed ${perKg(band[0])} – ${perKg(band[1])} (best mandi ${perKg(best)})`
-                    : 'Must lie within the band around mandi prices'}
+                    ? `Allowed ${perKg(band[0])} – ${perKg(band[1])} (Tamil Nadu price ${perKg(statePrice)})`
+                    : 'Must lie within the band around the Tamil Nadu price'}
                 </span>
               </div>
               <div className="bh-field">
@@ -602,7 +609,7 @@ export function MarketPanel() {
   return (
     <Panel
       title="Markets"
-      subtitle="APMC mandi prices, sales and player trade"
+      subtitle="One Tamil Nadu price per crop · deliver to any mandi · player trade"
       onClose={close}
       size="lg"
       testId="market-panel"
@@ -612,23 +619,24 @@ export function MarketPanel() {
         value={tab}
         onChange={setTab}
         tabs={[
-          { id: 'prices', label: 'Mandi prices', testId: 'market-tab-prices' },
+          { id: 'prices', label: 'Tamil Nadu prices', testId: 'market-tab-prices' },
           { id: 'sell', label: 'Sell to mandi', testId: 'market-tab-sell' },
           { id: 'p2p', label: 'Player listings', testId: 'market-tab-p2p' },
           { id: 'mine', label: 'My listings', testId: 'market-tab-mine' },
         ]}
       />
-      {(tab === 'prices' || tab === 'sell') && list.length > 1 ? (
+      {tab === 'sell' && list.length > 1 ? (
         <div style={{ marginBottom: 12 }}>
           <Segmented
-            label="Market"
+            label="Deliver to mandi"
             value={market?.id ?? ''}
             onChange={setMarketId}
             options={list.map((m) => ({ id: m.id, label: m.name }))}
           />
           {market ? (
             <span className="faint" style={{ fontSize: 12, marginLeft: 10 }}>
-              Fee {(market.feeBps / 100).toFixed(1)}% · price ×{market.priceScale.toFixed(2)}
+              Same Tamil Nadu price at every mandi · fee {(market.feeBps / 100).toFixed(1)}% ·
+              transport by distance
             </span>
           ) : null}
         </div>
@@ -637,7 +645,7 @@ export function MarketPanel() {
         <ErrorState error={markets.error} onRetry={() => void markets.refetch()} />
       ) : null}
       {markets.isPending ? <Skeleton height={200} /> : null}
-      {market && tab === 'prices' ? <PricesTable market={market} /> : null}
+      {list[0] && tab === 'prices' ? <PricesTable market={list[0]} /> : null}
       {market && tab === 'sell' ? <SellForm key={market.id} market={market} /> : null}
       {tab === 'p2p' ? <P2PListings /> : null}
       {tab === 'mine' ? <MyListings markets={list} /> : null}

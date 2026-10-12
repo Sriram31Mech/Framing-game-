@@ -28,13 +28,16 @@ const EnvSchema = z.object({
     .transform((v) => v === undefined || v === '' || v === 'true' || v === '1'),
   STEAM_APP_ID: z.string().optional().default(''),
   STEAM_WEB_API_KEY: z.string().optional().default(''),
-  REGION_ID: z.string().default('hemavati'),
+  REGION_ID: z.string().default('tamil-nadu'),
   REAL_SECONDS_PER_GAME_DAY: z.coerce.number().int().min(1).max(86_400).default(120),
   WORKER_POLL_MS: z.coerce.number().int().min(100).max(60_000).default(2000),
   MAX_CATCHUP_DAYS_PER_BATCH: z.coerce.number().int().min(1).max(1000).default(30),
   AI_COMPANY_COUNT: z.coerce.number().int().min(0).max(10).default(3),
   SERVE_CLIENT_DIR: z.string().optional().default(''),
   TRUST_PROXY: bool,
+  RATE_LIMIT_AUTH_PER_MIN: z.coerce.number().int().min(1).max(100_000).default(10),
+  RATE_LIMIT_COMMANDS_PER_MIN: z.coerce.number().int().min(1).max(100_000).default(120),
+  RATE_LIMIT_QUERIES_PER_MIN: z.coerce.number().int().min(1).max(100_000).default(600),
 });
 
 export interface AppConfig {
@@ -59,6 +62,8 @@ export interface AppConfig {
   aiCompanyCount: number;
   serveClientDir: string;
   trustProxy: boolean;
+  /** Per-minute request limits: auth per IP, commands/queries per session. */
+  rateLimits: { auth: number; commands: number; queries: number };
 }
 
 const INSECURE_SECRETS = new Set([
@@ -118,5 +123,10 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     aiCompanyCount: e.AI_COMPANY_COUNT,
     serveClientDir: e.SERVE_CLIENT_DIR,
     trustProxy: e.TRUST_PROXY,
+    rateLimits: {
+      auth: e.RATE_LIMIT_AUTH_PER_MIN,
+      commands: e.RATE_LIMIT_COMMANDS_PER_MIN,
+      queries: e.RATE_LIMIT_QUERIES_PER_MIN,
+    },
   };
 }

@@ -52,6 +52,15 @@ export function useRegionMap(regionId: string | undefined) {
   });
 }
 
+export function useSegment(segmentId: string | null) {
+  return useQuery({
+    queryKey: qk.segment(segmentId ?? ''),
+    queryFn: () => api.segment(segmentId!),
+    enabled: !!segmentId,
+    staleTime: 10_000,
+  });
+}
+
 export function useParcel(parcelId: string | null) {
   return useQuery({
     queryKey: qk.parcel(parcelId ?? ''),

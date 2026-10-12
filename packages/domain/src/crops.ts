@@ -17,7 +17,8 @@ export const CROPS: Record<CropId, CropDefinition> = {
     id: 'rice',
     name: 'Rice (paddy)',
     localName: 'Bhatta',
-    sowingMonths: [6, 7, 8],
+    // Kuruvai (Jun–Jul), Samba (Aug–Sep), Thaladi (Oct) and Navarai (Dec) plantings.
+    sowingMonths: [6, 7, 8, 9, 10, 12],
     stages: [
       { id: 'germination', days: 20 },
       { id: 'vegetative', days: 50 },
@@ -69,7 +70,7 @@ export const CROPS: Record<CropId, CropDefinition> = {
       tempC: { min: 15, optMin: 19, optMax: 28, max: 34 },
       rainMm: { min: 250, optMin: 400, optMax: 800, max: 1300 },
       ph: { min: 4.5, optMin: 5.0, optMax: 7.2, max: 8.2 },
-      elevationM: { min: 200, optMin: 500, optMax: 1300, max: 2200 },
+      elevationM: { min: 0, optMin: 0, optMax: 1300, max: 2300 },
       maxSlopePct: 18,
       soils: {
         sandy_loam: 1,
@@ -116,7 +117,7 @@ export const CROPS: Record<CropId, CropDefinition> = {
       tempC: { min: 14, optMin: 19, optMax: 28, max: 34 },
       rainMm: { min: 350, optMin: 500, optMax: 850, max: 1300 },
       ph: { min: 5.0, optMin: 5.8, optMax: 7.2, max: 8.3 },
-      elevationM: { min: 0, optMin: 200, optMax: 1200, max: 2000 },
+      elevationM: { min: 0, optMin: 0, optMax: 1200, max: 2000 },
       maxSlopePct: 12,
       soils: {
         loam: 1,
@@ -210,7 +211,7 @@ export const CROPS: Record<CropId, CropDefinition> = {
       tempC: { min: 12, optMin: 18, optMax: 25, max: 32 },
       rainMm: { min: 250, optMin: 400, optMax: 650, max: 1000 },
       ph: { min: 5.0, optMin: 6.0, optMax: 7.0, max: 8.0 },
-      elevationM: { min: 200, optMin: 500, optMax: 1300, max: 2000 },
+      elevationM: { min: 0, optMin: 0, optMax: 1500, max: 2400 },
       maxSlopePct: 10,
       soils: {
         loam: 1,
@@ -257,7 +258,7 @@ export const CROPS: Record<CropId, CropDefinition> = {
       tempC: { min: 10, optMin: 16, optMax: 25, max: 30 },
       rainMm: { min: 120, optMin: 220, optMax: 420, max: 700 },
       ph: { min: 5.5, optMin: 6.5, optMax: 7.8, max: 8.6 },
-      elevationM: { min: 0, optMin: 200, optMax: 1000, max: 1600 },
+      elevationM: { min: 0, optMin: 0, optMax: 1100, max: 1800 },
       maxSlopePct: 10,
       soils: {
         clay_loam: 1,

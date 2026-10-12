@@ -25,6 +25,7 @@ import {
   p2pPriceBand,
   quoteMarketSale,
   rngFor,
+  statewideDemandScale,
   splitInstalment,
   transportCostPaise,
   type CompanyStatus,
@@ -39,41 +40,40 @@ const APMC: MarketDefinition = {
   y: 0,
   feeBps: 100,
   demandScale: 1,
-  priceScale: 1,
 };
 const DISTRICT: MarketDefinition = {
   ...APMC,
   id: 'district-market',
   feeBps: 150,
   demandScale: 1.5,
-  priceScale: 1.08,
 };
 const rice = CROPS.rice;
 const noNoise = () => 0.5;
 
 describe('market prices', () => {
-  it('starts at the seasonal reference price scaled by the market', () => {
-    const june = initialMarketItemState(APMC, rice, 0);
+  it('starts at one statewide seasonal price with demand summed over every mandi', () => {
+    const june = initialMarketItemState(rice, 0, 1);
     expect(june).toEqual({
       itemId: 'rice',
       pricePaisePerKg: Math.round(rice.basePricePaisePerKg * rice.seasonalPriceFactor[5]!),
       supplyPressureKg: 0,
       demandKgPerDay: rice.baseDemandKgPerDay,
     });
-    const district = initialMarketItemState(DISTRICT, rice, 0);
-    expect(district.pricePaisePerKg).toBeGreaterThan(june.pricePaisePerKg);
-    expect(district.demandKgPerDay).toBe(rice.baseDemandKgPerDay * 1.5);
+    expect(statewideDemandScale([APMC, DISTRICT])).toBe(2.5);
+    const state = initialMarketItemState(rice, 0, statewideDemandScale([APMC, DISTRICT]));
+    expect(state.pricePaisePerKg).toBe(june.pricePaisePerKg);
+    expect(state.demandKgPerDay).toBe(rice.baseDemandKgPerDay * 2.5);
   });
 
   it('mean-reverts toward the seasonal target', () => {
-    const target = initialMarketItemState(APMC, rice, 0).pricePaisePerKg;
+    const target = initialMarketItemState(rice, 0, 1).pricePaisePerKg;
     let state: MarketItemState = {
-      ...initialMarketItemState(APMC, rice, 0),
+      ...initialMarketItemState(rice, 0, 1),
       pricePaisePerKg: target * 2,
     };
     const gaps: number[] = [];
     for (let day = 0; day < 25; day++) {
-      state = nextMarketItemState(state, { market: APMC, crop: rice, day, random: noNoise });
+      state = nextMarketItemState(state, { crop: rice, day, random: noNoise });
       gaps.push(Math.abs(state.pricePaisePerKg - target));
     }
     for (let i = 1; i < gaps.length; i++) expect(gaps[i]!).toBeLessThanOrEqual(gaps[i - 1]!);
@@ -84,7 +84,7 @@ describe('market prices', () => {
     const base = CROPS.tomato.basePricePaisePerKg;
     const high = nextMarketItemState(
       { itemId: 'tomato', pricePaisePerKg: base * 10, supplyPressureKg: 0, demandKgPerDay: 5000 },
-      { market: APMC, crop: CROPS.tomato, day: 0, random: () => 0.99 },
+      { crop: CROPS.tomato, day: 0, random: () => 0.99 },
     );
     expect(high.pricePaisePerKg).toBe(base * 2.5);
     let glut: MarketItemState = {
@@ -95,7 +95,6 @@ describe('market prices', () => {
     };
     for (let day = 0; day < 60; day++) {
       glut = nextMarketItemState(glut, {
-        market: APMC,
         crop: CROPS.tomato,
         day,
         random: rngFor('glut', day),
@@ -107,15 +106,15 @@ describe('market prices', () => {
   });
 
   it('decays supply pressure about 15% a day and recovers after a dump', () => {
-    const start = initialMarketItemState(APMC, rice, 0);
+    const start = initialMarketItemState(rice, 0, 1);
     const dumped = applyMarketSale(start, 16_000);
     expect(dumped.supplyPressureKg).toBe(16_000);
     expect(dumped.pricePaisePerKg).toBeLessThan(start.pricePaisePerKg);
-    const next = nextMarketItemState(dumped, { market: APMC, crop: rice, day: 1, random: noNoise });
+    const next = nextMarketItemState(dumped, { crop: rice, day: 1, random: noNoise });
     expect(next.supplyPressureKg).toBe(13_600);
     let state = next;
     for (let day = 2; day < 40; day++)
-      state = nextMarketItemState(state, { market: APMC, crop: rice, day, random: noNoise });
+      state = nextMarketItemState(state, { crop: rice, day, random: noNoise });
     expect(state.pricePaisePerKg).toBeGreaterThan(dumped.pricePaisePerKg);
     expect(Math.abs(state.pricePaisePerKg - start.pricePaisePerKg)).toBeLessThan(
       start.pricePaisePerKg * 0.05,
@@ -123,11 +122,10 @@ describe('market prices', () => {
   });
 
   it('stays bounded and near the seasonal average under random noise', () => {
-    let state = initialMarketItemState(APMC, CROPS.tomato, 0);
+    let state = initialMarketItemState(CROPS.tomato, 0, 1);
     let sum = 0;
     for (let day = 0; day < 720; day++) {
       state = nextMarketItemState(state, {
-        market: APMC,
         crop: CROPS.tomato,
         day,
         random: rngFor('noise', day),

@@ -44,7 +44,7 @@ async function main(): Promise<void> {
     logger.info(res, 'world bootstrapped');
   }
 
-  const { app } = await buildApp(deps, { defaultMetrics: true });
+  const { app } = await buildApp(deps, { defaultMetrics: true, rateLimits: config.rateLimits });
 
   let shuttingDown = false;
   const shutdown = async (signal: string) => {

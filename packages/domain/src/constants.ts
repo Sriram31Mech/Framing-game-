@@ -17,7 +17,12 @@ export const STARTING_CASH_PAISE: Paise = 500_000_00;
  * (₹25,00,000) so they can compete for full-size parcels from day one.
  */
 export const AI_STARTING_CASH_PAISE: Paise = 2_500_000_00;
-/** Cash given instead of a starter plot if none remain: ₹1,50,000. */
+/**
+ * When the reserved starter plots run out, new players get a random state holding of at most this
+ * size instead (starter plots average ~0.7 ha; this keeps the gift modest).
+ */
+export const STARTER_GRANT_MAX_HA = 2;
+/** Cash given instead of a starter plot if no land at all remains: ₹1,50,000. */
 export const NO_STARTER_PLOT_BONUS_PAISE: Paise = 150_000_00;
 /** Fresh-start grant after bankruptcy: ₹2,00,000. */
 export const BANKRUPTCY_RESTART_GRANT_PAISE: Paise = 200_000_00;

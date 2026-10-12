@@ -2,7 +2,7 @@
  * Display formatting. Money always goes through the domain `formatInr` so the client
  * shows exactly the same Indian-format strings as notifications and server text.
  */
-import { formatInr } from '@bh/domain';
+import { formatInr, haToAcres, tamilSeasonOfMonth } from '@bh/domain';
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const MONTHS_LONG = [
@@ -68,8 +68,10 @@ export function formatKg(kg: number): string {
 }
 
 /** Area in hectares, two decimals. */
+/** Land area for display: acres, as Tamil Nadu farmers measure it (domain stores hectares). */
 export function formatHa(ha: number): string {
-  return `${twoDp.format(ha)} ha`;
+  const acres = haToAcres(ha);
+  return `${acres >= 10 ? Math.round(acres).toLocaleString('en-IN') : twoDp.format(Math.round(acres * 10) / 10)} acres`;
 }
 
 /** 0..1 fraction → "42%". */
@@ -137,4 +139,10 @@ export function qualityLabel(q: number): string {
 
 export function seasonLabel(season: 'kharif' | 'rabi' | 'zaid'): string {
   return season === 'kharif' ? 'Kharif' : season === 'rabi' ? 'Rabi' : 'Zaid';
+}
+
+/** Tamil Nadu cropping season for a month, e.g. "Kuruvai · குறுவை". */
+export function tamilSeasonLabel(month: number): string {
+  const s = tamilSeasonOfMonth(month);
+  return `${s.name} · ${s.tamil}`;
 }

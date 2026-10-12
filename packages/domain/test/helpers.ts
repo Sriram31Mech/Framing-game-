@@ -1,6 +1,5 @@
 import {
   CROPS,
-  HEMAVATI_CLIMATE,
   PEST_CONTROL_PROTECTION_DAYS,
   advanceCropDay,
   computeSuitability,
@@ -16,7 +15,16 @@ import {
   type CropPlotState,
   type DailyWeather,
   type ParcelEnvironment,
+  type RegionClimate,
 } from '../src';
+
+/** Calibration fixture: a ~950 m monsoon plateau (the original Hemavati Valley climate). */
+export const HEMAVATI_CLIMATE: RegionClimate = {
+  monthlyRainMm: [3, 5, 14, 55, 115, 135, 215, 160, 130, 165, 60, 15],
+  monthlyMeanTempC: [21.5, 23.5, 25.5, 26.5, 26, 23, 22, 22, 22.5, 22.5, 21.5, 20.5],
+  lapseRateCPerKm: 6.5,
+  referenceElevationM: 950,
+};
 
 /** Representative parcels of the Hemavati Valley. */
 export const ENVS = {

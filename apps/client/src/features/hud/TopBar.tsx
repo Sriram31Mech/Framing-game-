@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { api, signOutLocally } from '../../api/client';
 import { useAuthConfig, useNotifications, useOverview, useWorld } from '../../api/queries';
 import { useDevAdvance } from '../../api/mutations';
-import { formatCountdown, money, moneyCompact, seasonLabel } from '../../lib/format';
+import { formatCountdown, money, moneyCompact, tamilSeasonLabel } from '../../lib/format';
 import { useConnectionStore, type ConnectionStatus } from '../../store/connection';
 import { useUiStore } from '../../store/ui';
 import { Chip } from '../../ui/Bits';
@@ -119,7 +119,7 @@ function GameDate() {
         <span className="date-label" data-testid="game-date" data-game-day={w.gameDay}>
           {w.date.label}
           <Chip tone="accent" title={`Day ${w.gameDay}`}>
-            {seasonLabel(w.date.season)}
+            {tamilSeasonLabel(w.date.month)}
           </Chip>
         </span>
         <Countdown

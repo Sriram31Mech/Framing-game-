@@ -295,7 +295,7 @@ export function AuthScreen() {
                 fontWeight: 650,
               }}
             >
-              Hemavati Valley · Karnataka
+              Tamil Nadu · 32 districts
             </span>
           </div>
           <h1>
@@ -303,10 +303,10 @@ export function AuthScreen() {
           </h1>
           <p className="tagline">
             Survey red-soil uplands and paddy flats, plant to the season, sell at the APMC mandi,
-            and grow a farm company in a living, shared valley that keeps turning while you are
-            away.
+            and grow a farm company across a living, shared Tamil Nadu that keeps turning while you
+            are away.
           </p>
-          <section className="bh-auth-card bh-glass" aria-label="Sign in">
+          <section className="bh-auth-card bh-glass bh-scroll" aria-label="Sign in">
             {reason ? (
               <div className="bh-callout info" role="status">
                 <Icon name="info" size={16} />

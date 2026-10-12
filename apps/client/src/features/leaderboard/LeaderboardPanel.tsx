@@ -11,7 +11,7 @@ export function LeaderboardPanel({ myCompanyId }: { myCompanyId: string | null }
   return (
     <Panel
       title="Leaderboard"
-      subtitle="Companies in the valley by valuation"
+      subtitle="Companies across Tamil Nadu by valuation"
       onClose={close}
       testId="leaderboard-panel"
     >

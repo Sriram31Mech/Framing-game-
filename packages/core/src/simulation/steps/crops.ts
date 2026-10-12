@@ -3,7 +3,10 @@ import {
   getCrop,
   PEST_CONTROL_PROTECTION_DAYS,
   rngFor,
+  districtWeatherOn,
+  TN_DISTRICTS,
   type CropEvent,
+  type DailyWeather,
   type CropId,
   type CropPlotState,
   type ParcelEnvironment,
@@ -49,6 +52,17 @@ export async function advanceCrops(ctx: TickContext): Promise<IrrigatedPlot[]> {
     [ctx.regionId, ctx.day],
   );
 
+  // Each district has its own climate and therefore its own (deterministic) daily weather.
+  const districtWeather = new Map<string, DailyWeather>();
+  const weatherFor = (districtId: string | undefined): DailyWeather => {
+    if (!districtId || !TN_DISTRICTS[districtId]) return ctx.weather;
+    let w = districtWeather.get(districtId);
+    if (!w) {
+      w = districtWeatherOn(ctx.regionSeed, districtId, ctx.day);
+      districtWeather.set(districtId, w);
+    }
+    return w;
+  };
   const irrigated: IrrigatedPlot[] = [];
   const updates: { id: string; state: CropPlotState; status: string }[] = [];
 
@@ -67,7 +81,7 @@ export async function advanceCrops(ctx: TickContext): Promise<IrrigatedPlot[]> {
     const { state, events } = advanceCropDay(row.state, {
       crop,
       env: row.env,
-      weather: ctx.weather,
+      weather: weatherFor(row.env.districtId),
       random: rngFor(ctx.regionSeed, row.id, ctx.day),
     });
     updates.push({ id: row.id, state, status: state.status });

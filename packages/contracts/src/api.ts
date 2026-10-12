@@ -207,6 +207,9 @@ export const ParcelSummaryDto = z.object({
   operatorCompanyId: z.uuid().nullable(),
   listPricePaise: PAISE.nullable(),
   isStarterPlot: z.boolean(),
+  /** Map segment (real assembly-constituency area) and district the holding lies in. */
+  segmentId: z.string().nullable(),
+  districtId: z.string().nullable(),
   soilTexture: z.string(),
   waterAccess: z.string(),
   elevationM: z.number(),
@@ -230,9 +233,37 @@ export const MarketDefinitionDto = z.object({
   y: z.number(),
   feeBps: z.number().int(),
   demandScale: z.number(),
-  priceScale: z.number(),
 });
 export type MarketDefinitionDto = z.infer<typeof MarketDefinitionDto>;
+
+export const DistrictDto = z.object({
+  id: z.string(),
+  name: z.string(),
+  tamilName: z.string(),
+  zone: z.string(),
+  polygons: z.array(z.array(Point)),
+  centroid: Point,
+  annualRainMm: z.number(),
+  knownFor: z.array(z.string()),
+});
+export type DistrictDto = z.infer<typeof DistrictDto>;
+
+export const SegmentSummaryDto = z.object({
+  id: z.string(),
+  name: z.string(),
+  districtId: z.string(),
+  polygon: z.array(Point),
+  centroid: Point,
+  areaHa: z.number(),
+  farmlandHa: z.number(),
+  holdings: z.number().int(),
+  holdingsForSale: z.number().int(),
+  /** Cheapest holding currently for sale, or null. */
+  minPricePaise: PAISE.nullable(),
+  /** Holdings the requesting company operates (owns or leases) here. */
+  mine: z.number().int(),
+});
+export type SegmentSummaryDto = z.infer<typeof SegmentSummaryDto>;
 
 export const RegionMapResponse = z.object({
   region: z.object({
@@ -241,6 +272,9 @@ export const RegionMapResponse = z.object({
     seed: z.number().int(),
     halfSizeM: z.number(),
   }),
+  districts: z.array(DistrictDto),
+  segments: z.array(SegmentSummaryDto),
+  /** Only holdings that are owned or leased (state land is listed per segment). */
   parcels: z.array(ParcelSummaryDto),
   roads: z.array(
     z.object({
@@ -310,6 +344,21 @@ export const CropPlotDto = z.object({
   version: z.number().int(),
 });
 export type CropPlotDto = z.infer<typeof CropPlotDto>;
+
+export const SegmentDetailResponse = z.object({
+  segment: SegmentSummaryDto,
+  district: DistrictDto.omit({ polygons: true }).extend({
+    zoneLabel: z.string(),
+    monthlyRainMm: z.array(z.number()),
+    monthlyMeanTempC: z.array(z.number()),
+    soils: z.record(z.string(), z.number()),
+    water: z.record(z.string(), z.number()),
+  }),
+  holdings: z.array(
+    ParcelSummaryDto.extend({ basePricePaise: PAISE, leaseRentPaisePerSeason: PAISE }),
+  ),
+});
+export type SegmentDetailResponse = z.infer<typeof SegmentDetailResponse>;
 
 export const ParcelDetailResponse = z.object({
   parcel: ParcelSummaryDto.extend({
@@ -804,6 +853,7 @@ export const ENDPOINTS = {
   me: 'GET /api/v1/me',
   world: 'GET /api/v1/world',
   regionMap: 'GET /api/v1/regions/:regionId/map',
+  segment: 'GET /api/v1/segments/:segmentId',
   parcel: 'GET /api/v1/parcels/:parcelId',
   parcelSuitability: 'GET /api/v1/parcels/:parcelId/suitability',
   crops: 'GET /api/v1/crops',

@@ -14,6 +14,7 @@ import { accountBalance } from '../postings';
 import type { TickContext } from '../types';
 import { closeContract, defaultContract, type ContractRow } from './expiry';
 import { forfeitLivePlots } from './leases';
+import { writeStatewideItemState } from '../../world/region';
 
 const rupees = (paise: number) => `₹${(paise / 100).toLocaleString('en-IN')}`;
 
@@ -329,31 +330,31 @@ async function sellAllInventory(ctx: TickContext, companyId: string): Promise<nu
      WHERE m.region_id = $1 ORDER BY s.market_id, s.item_id FOR UPDATE OF s`,
     [ctx.regionId],
   );
-  const states = new Map<string, { def: MarketDefinition; state: MarketItemState }>();
+  // One statewide state per item (first mandi row); mandis differ only by fee here.
+  const states = new Map<ItemId, MarketItemState>();
+  const defs = new Map<string, MarketDefinition>();
   for (const m of markets) {
-    states.set(`${m.market_id}|${m.item_id}`, {
-      def: m.definition,
-      state: {
-        itemId: m.item_id,
-        pricePaisePerKg: m.price_paise_per_kg,
-        supplyPressureKg: m.supply_pressure_kg,
-        demandKgPerDay: m.demand_kg_per_day,
-      },
+    defs.set(m.market_id, m.definition);
+    if (states.has(m.item_id)) continue;
+    states.set(m.item_id, {
+      itemId: m.item_id,
+      pricePaisePerKg: m.price_paise_per_kg,
+      supplyPressureKg: m.supply_pressure_kg,
+      demandKgPerDay: m.demand_kg_per_day,
     });
   }
 
   let totalNet = 0;
   for (const lot of lots) {
     let best: {
-      key: string;
       marketId: string;
       quote: ReturnType<typeof quoteMarketSale>;
     } | null = null;
-    for (const [key, s] of states) {
-      if (s.state.itemId !== lot.item_id) continue;
-      const quote = quoteMarketSale(s.state, s.def, lot.quantity_kg, lot.quality);
-      if (!best || quote.netPaise > best.quote.netPaise) {
-        best = { key, marketId: s.def.id, quote };
+    const state = states.get(lot.item_id);
+    if (state) {
+      for (const def of defs.values()) {
+        const quote = quoteMarketSale(state, def, lot.quantity_kg, lot.quality);
+        if (!best || quote.netPaise > best.quote.netPaise) best = { marketId: def.id, quote };
       }
     }
     await c.query(
@@ -363,21 +364,10 @@ async function sellAllInventory(ctx: TickContext, companyId: string): Promise<nu
       [lot.id],
     );
     const sold = best !== null && best.quote.unitPricePaise > 0 && best.quote.grossPaise > 0;
-    if (sold && best) {
-      const entry = states.get(best.key)!;
-      entry.state = applyMarketSale(entry.state, lot.quantity_kg);
-      await c.query(
-        `UPDATE market_item_states SET price_paise_per_kg = $3, supply_pressure_kg = $4,
-                demand_kg_per_day = $5, version = version + 1
-         WHERE market_id = $1 AND item_id = $2`,
-        [
-          best.marketId,
-          lot.item_id,
-          Math.max(1, Math.round(entry.state.pricePaisePerKg)),
-          Math.max(0, Math.round(entry.state.supplyPressureKg)),
-          Math.max(0, Math.round(entry.state.demandKgPerDay)),
-        ],
-      );
+    if (sold && best && state) {
+      const nextState = applyMarketSale(state, lot.quantity_kg);
+      states.set(lot.item_id, nextState);
+      await writeStatewideItemState(c, ctx.regionId, nextState);
       const { rows: trade } = await c.query<{ id: string }>(
         `INSERT INTO trades (region_id, kind, market_id, buyer_company_id, seller_company_id, item_id,
                              quantity_kg, quality, unit_price_paise, gross_paise, fee_paise, transport_paise, game_day)
