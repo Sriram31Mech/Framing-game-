@@ -1,0 +1,42 @@
+name: Android APK
+
+on:
+  workflow_dispatch:
+    inputs:
+      server_url:
+        description: 'Game server URL the app opens (e.g. https://game.example.com)'
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: pnpm
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '21'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @bh/client build
+      # android/ is generated fresh each run, so nothing native is kept in the repo.
+      - working-directory: apps/client
+        env:
+          BH_SERVER_URL: ${{ inputs.server_url }}
+        run: |
+          npx cap add android
+          npx cap sync android
+      - working-directory: apps/client/android
+        run: ./gradlew assembleDebug
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bharat-harvest-debug-apk
+          path: apps/client/android/app/build/outputs/apk/debug/app-debug.apk

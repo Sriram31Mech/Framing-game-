@@ -14,3 +14,4 @@ test-results/
 backups/
 *.dump
 apps/desktop/out/
+apps/client/android/
