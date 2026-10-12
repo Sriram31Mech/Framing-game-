@@ -6,6 +6,8 @@ const API_TARGET = process.env.BH_API_TARGET ?? 'http://localhost:8080';
 export default defineConfig({
   plugins: [react()],
   server: {
+    // BH_LAN=1 exposes the dev server on the Wi-Fi network so a phone (or the Android app) can reach it.
+    host: Boolean(process.env.BH_LAN),
     port: 5173,
     strictPort: true,
     proxy: {

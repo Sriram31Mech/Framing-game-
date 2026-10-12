@@ -2234,3 +2234,128 @@ body:has([aria-modal='true']) .tour-card {
     display: none;
   }
 }
+
+/* ---------- phones: dock becomes a bottom bar, panels become full-width sheets ---------- */
+@media (max-width: 760px) {
+  :root {
+    --topbar-h: 48px;
+    --dock-h: 66px;
+    --gutter: 6px;
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  .bh-hints,
+  .bh-legend,
+  .bh-topbar .divider,
+  .bh-brand .company,
+  .bh-date .sub {
+    display: none;
+  }
+  /* Keep the status dot, drop its text label. */
+  .bh-conn {
+    font-size: 0;
+  }
+  .bh-topbar {
+    top: calc(var(--gutter) + var(--safe-top));
+    left: var(--gutter);
+    right: var(--gutter);
+    gap: var(--space-2);
+  }
+  .bh-topbar .cash {
+    font-size: var(--fs-xl);
+  }
+  .bh-date {
+    font-size: var(--fs-sm);
+  }
+
+  .bh-dock {
+    top: auto;
+    bottom: calc(var(--gutter) + var(--safe-bottom));
+    left: var(--gutter);
+    right: var(--gutter);
+    width: auto;
+    height: var(--dock-h);
+    flex-direction: row;
+    padding: 0 var(--space-1);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .bh-dock button {
+    flex: none;
+    width: 52px;
+    height: 50px;
+  }
+  .bh-dock .sep {
+    flex: none;
+    width: 3px;
+    height: 32px;
+    margin: 0 2px;
+  }
+
+  /* Everything that hung off the left dock now spans the screen above the bottom bar. */
+  .bh-panel,
+  .bh-panel.lg {
+    top: calc(var(--topbar-h) + var(--gutter) * 2 + var(--safe-top));
+    left: var(--gutter);
+    right: var(--gutter);
+    bottom: calc(var(--dock-h) + var(--gutter) * 2 + var(--safe-bottom));
+    width: auto;
+    max-width: none;
+  }
+  .tn-layers,
+  .area-hud {
+    left: var(--gutter);
+    right: var(--gutter);
+    bottom: calc(var(--dock-h) + var(--gutter) * 2 + var(--safe-bottom));
+    max-width: none;
+  }
+  .tn-guide,
+  .tour-card {
+    top: calc(var(--topbar-h) + var(--gutter) * 2 + var(--safe-top));
+    left: var(--gutter);
+    right: var(--gutter);
+    width: auto;
+    max-width: none;
+  }
+  .bh-stale-banner,
+  .bh-perf {
+    top: calc(var(--topbar-h) + var(--gutter) * 2 + var(--safe-top));
+  }
+  .bh-toasts {
+    left: var(--gutter);
+    right: var(--gutter);
+    bottom: calc(var(--dock-h) + var(--gutter) * 2 + var(--safe-bottom));
+    width: auto;
+  }
+
+  .bh-backdrop {
+    padding: var(--gutter);
+  }
+  .bh-dialog,
+  .bh-dialog.wide {
+    width: 100%;
+    max-height: calc(100dvh - 2 * var(--gutter));
+  }
+  .bh-dialog footer {
+    flex-wrap: wrap;
+  }
+  .bh-grid-2,
+  .bh-grid-3 {
+    grid-template-columns: 1fr;
+  }
+  .bh-panel-body,
+  .bh-dialog .body {
+    overflow-x: auto;
+  }
+
+  .bh-landing-vignette {
+    background: rgba(251, 247, 239, 0.82);
+  }
+  .bh-landing-content {
+    align-items: flex-start;
+    padding: calc(var(--space-5) + var(--safe-top)) var(--space-4) var(--space-5);
+  }
+  .bh-hero h1 {
+    font-size: 32px;
+  }
+}

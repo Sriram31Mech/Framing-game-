@@ -179,6 +179,16 @@ docker compose -f infra/docker/compose.prod.yml --env-file infra/docker/.env.pro
 Full procedures (deploy, rollback, migrations, backups, monitoring, incidents) are in
 [`docs/RUNBOOK.md`](docs/RUNBOOK.md).
 
+## Android app
+
+The app is a Capacitor shell that loads the game from a server (the client calls relative `/api`
+URLs), so it needs a server the phone can reach. The APK is built on GitHub: **Actions → Android
+APK → Run workflow**, giving the server URL. Download `bharat-harvest-debug-apk` from the run.
+
+- **Testing at home, nothing hosted:** run `BH_LAN=1 pnpm dev` (phone on the same Wi-Fi), find the
+  laptop IP with `ipconfig getifaddr en0`, and use `http://<that-ip>:5173` as the URL.
+- **Real players:** deploy with `infra/docker/compose.prod.yml` and use its `https://` domain.
+
 ## Security notes
 
 - This repository is public. Commit only placeholders (`.env.example`,
