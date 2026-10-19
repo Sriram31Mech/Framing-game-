@@ -57,8 +57,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/domain
       '@capacitor/android':
-        specifier: ^7
-        version: 7.6.9(@capacitor/core@7.6.9)
+        specifier: ^8
+        version: 8.5.3(@capacitor/core@7.6.9)
       '@capacitor/core':
         specifier: ^7
         version: 7.6.9
@@ -311,10 +311,10 @@ packages:
   '@cacheable/utils@2.5.0':
     resolution: {integrity: sha512-buipgOVDkkPXNR5+xBpDw7Zk2n1EvU7qBJCNUcL7rhQ//kfpOXPAvQ511Os0vpLYJ1pZnvudNytkQt2hst3wqA==}
 
-  '@capacitor/android@7.6.9':
-    resolution: {integrity: sha512-jvfU42aOuj92/KJqRscfDm+5612WzJainFL09xjJgD9oI3OMXN4PBfccn8Ig9i8x7bkVqZv/XNwFshiIRqmggg==}
+  '@capacitor/android@8.5.3':
+    resolution: {integrity: sha512-ilH4gSSz3DrketMkzDVAvY9JsWJ//rCQnECLTdcFRO7xXDogwAbUvQAnIAbiqefwV/D1xfjEL4Gw1MJXEcaA9g==}
     peerDependencies:
-      '@capacitor/core': ^7.6.0
+      '@capacitor/core': ^8.5.0
 
   '@capacitor/cli@7.6.9':
     resolution: {integrity: sha512-QBDEf38yBAFTJehbi5FvAmhDWV1I/e7Zr3Z6XX0Bj+9T+/OY5EkGbw5/1e+3oIyyeepq3WtdSkLWHs3VNH2gCA==}
@@ -2610,7 +2610,7 @@ snapshots:
       hashery: 1.5.1
       keyv: 5.6.0
 
-  '@capacitor/android@7.6.9(@capacitor/core@7.6.9)':
+  '@capacitor/android@8.5.3(@capacitor/core@7.6.9)':
     dependencies:
       '@capacitor/core': 7.6.9
 

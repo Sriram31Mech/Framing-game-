@@ -12,7 +12,7 @@
   "dependencies": {
     "@bh/contracts": "workspace:*",
     "@bh/domain": "workspace:*",
-    "@capacitor/android": "^7",
+    "@capacitor/android": "^8",
     "@capacitor/core": "^7",
     "@react-three/drei": "^10.7.9",
     "@react-three/fiber": "^9.8.1",
