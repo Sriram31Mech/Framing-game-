@@ -17,7 +17,7 @@
     "@bh/domain": "workspace:*",
     "pg": "^8.23.1",
     "pino": "^10.4.0",
-    "zod": "^4.6.5"
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@types/pg": "^8.23.1"
