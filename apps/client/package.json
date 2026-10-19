@@ -13,7 +13,7 @@
     "@bh/contracts": "workspace:*",
     "@bh/domain": "workspace:*",
     "@capacitor/android": "^7",
-    "@capacitor/core": "^7",
+    "@capacitor/core": "^8",
     "@react-three/drei": "^10.7.9",
     "@react-three/fiber": "^9.8.1",
     "@tanstack/react-query": "^5.104.1",
