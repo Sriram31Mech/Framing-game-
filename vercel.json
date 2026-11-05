@@ -1,0 +1,4 @@
+{
+  "outputDirectory": "apps/client/dist",
+  "rewrites": [{ "source": "/((?!assets/).*)", "destination": "/index.html" }]
+}
