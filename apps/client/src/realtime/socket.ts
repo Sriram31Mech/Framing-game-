@@ -198,6 +198,7 @@ export class RealtimeClient {
 }
 
 export function defaultSocketUrl(): string {
-  const { protocol, host } = window.location;
+  const api = import.meta.env.VITE_API_URL as string | undefined;
+  const { protocol, host } = api ? new URL(api) : window.location;
   return `${protocol === 'https:' ? 'wss' : 'ws'}://${host}/api/v1/ws`;
 }

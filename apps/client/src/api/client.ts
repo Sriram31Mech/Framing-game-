@@ -26,7 +26,14 @@ export function signOutLocally(reason?: string): void {
   queryClient.clear();
 }
 
+// Empty = same origin (dev proxy / single-host deploy). Set VITE_API_URL when the API is hosted elsewhere, e.g. on Vercel.
+export const API_URL = ((import.meta.env.VITE_API_URL as string | undefined) ?? '').replace(
+  /\/$/,
+  '',
+);
+
 export const http = createHttpClient({
+  baseUrl: API_URL,
   getToken,
   onUnauthorized: () => {
     if (getToken()) signOutLocally('Your session has ended. Please sign in again.');
