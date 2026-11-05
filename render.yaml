@@ -1,0 +1,35 @@
+# Render Blueprint: API + WebSocket server, simulation worker and Postgres (PostGIS available).
+# Deploy: Render dashboard -> New -> Blueprint -> pick this repo. Docs: docs/RUNBOOK.md
+services:
+  - type: web
+    name: bharat-harvest-api # URL becomes https://bharat-harvest-api.onrender.com (keep in sync with vercel.json)
+    runtime: docker
+    dockerfilePath: infra/docker/app.Dockerfile
+    plan: free # shortcut: free tier sleeps when idle, upgrade to starter for always-on
+    healthCheckPath: /healthz
+    envVars:
+      - { key: APP_ENV, value: production }
+      - { key: RUN_MIGRATIONS_ON_BOOT, value: 'true' }
+      - { key: TRUST_PROXY, value: 'true' }
+      - { key: ENABLE_DEV_AUTH, value: 'false' }
+      - { key: ENABLE_DEV_ADMIN, value: 'false' }
+      - { key: PUBLIC_CLIENT_URL, value: https://farming-game.vercel.app } # the Vercel site, for CORS
+      - { key: SESSION_SECRET, generateValue: true }
+      - { key: DATABASE_URL, fromDatabase: { name: bharat-harvest-db, property: connectionString } }
+
+  - type: worker
+    name: bharat-harvest-worker
+    runtime: docker
+    dockerfilePath: infra/docker/app.Dockerfile
+    dockerCommand: node apps/worker/dist/main.js
+    plan: starter # Render has no free background workers
+    envVars:
+      - { key: APP_ENV, value: production }
+      - { key: ENABLE_DEV_AUTH, value: 'false' }
+      - { key: ENABLE_DEV_ADMIN, value: 'false' }
+      - { key: SESSION_SECRET, generateValue: true }
+      - { key: DATABASE_URL, fromDatabase: { name: bharat-harvest-db, property: connectionString } }
+
+databases:
+  - name: bharat-harvest-db
+    plan: free # shortcut: free Postgres expires after 30 days, upgrade before then
